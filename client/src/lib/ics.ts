@@ -1,0 +1,51 @@
+import type { NextSale } from './saleWindows';
+
+function pad(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+function toUtcStamp(d: Date): string {
+  return (
+    `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}` +
+    `T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`
+  );
+}
+
+export function salesToIcs(items: NextSale[]): string {
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//KIA Tigers personal ticket helper//KO',
+    'CALSCALE:GREGORIAN',
+    'X-WR-CALNAME:KIA 타이거즈 예매 오픈',
+  ];
+  for (const item of items) {
+    const start = item.window.at;
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    const uid = `${item.game.id}-${item.window.kind}@tigers-helper`;
+    const summary = `${item.window.label} 오픈 · KIA vs ${item.game.opponentShort}`;
+    const desc = `${item.game.date} ${item.game.startTime} ${item.game.stadium}\\n공식 예매: https://www.ticketlink.co.kr/sports/137/58`;
+    lines.push(
+      'BEGIN:VEVENT',
+      `UID:${uid}`,
+      `DTSTAMP:${toUtcStamp(new Date())}`,
+      `DTSTART:${toUtcStamp(start)}`,
+      `DTEND:${toUtcStamp(end)}`,
+      `SUMMARY:${summary}`,
+      `DESCRIPTION:${desc}`,
+      'END:VEVENT'
+    );
+  }
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+
+export function downloadIcs(filename: string, ics: string): void {
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
