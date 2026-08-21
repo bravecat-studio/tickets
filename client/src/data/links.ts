@@ -14,5 +14,6 @@ export const APP_STORES = {
   tigersIos: 'https://apps.apple.com/kr/app/kia-%ED%83%80%EC%9D%B4%EA%B1%B0%EC%A6%88/id1048892345',
   tigersAndroid: 'https://play.google.com/store/apps/details?id=kr.co.kiatigers',
   ticketlinkIos: 'https://apps.apple.com/kr/app/ticketlink/id410310193',
-  ticketlinkAndroid: 'https://play.google.com/store/apps/details?id=com.interpark.ticketlink',
+  ticketlinkAndroid:
+    'https://play.google.com/store/apps/details?id=kr.co.ticketlink.cne&pcampaignid=web_share',
 } as const;

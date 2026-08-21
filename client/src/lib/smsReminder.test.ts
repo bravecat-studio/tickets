@@ -26,5 +26,9 @@ describe('sms reminder timing', () => {
     expect(due[0].game.id).toBe('2026-08-29-ssg');
     expect(smsMessage(due[0])).toContain('오픈 1시간 전');
     expect(smsMessage(due[0])).toContain('vs SSG');
+    expect(smsMessage(due[0])).toContain('https://www.ticketlink.co.kr/sports/137/58');
+    expect(smsMessage(due[0])).toContain(
+      'https://play.google.com/store/apps/details?id=kr.co.ticketlink.cne'
+    );
   });
 });

@@ -1,4 +1,5 @@
 import type { NextSale } from './saleWindows';
+import { APP_STORES, OFFICIAL_LINKS } from '../data/links';
 
 export const SMS_LEAD_MS = 60 * 60 * 1000;
 export const SMS_CRON_INTERVAL_MS = 10 * 60 * 1000;
@@ -45,6 +46,7 @@ export function smsMessage(item: NextSale): string {
     `[KIA] ${item.window.label} 오픈 1시간 전`,
     `vs ${item.game.opponentShort} ${item.game.date} ${item.game.startTime}`,
     `오픈 ${open}`,
-    '공식 예매: https://www.ticketlink.co.kr/sports/137/58',
+    `공식 예매: ${OFFICIAL_LINKS.ticketlinkKia}`,
+    `앱: ${APP_STORES.ticketlinkAndroid}`,
   ].join('\n');
 }
