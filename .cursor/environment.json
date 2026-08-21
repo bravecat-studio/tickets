@@ -1,6 +1,7 @@
 {
   "name": "tickets",
   "install": "npm install",
+  "start": "echo 'tickets ready: starting api (:3001) and web (:5173) terminals'",
   "terminals": [
     {
       "name": "api",
