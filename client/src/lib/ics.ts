@@ -33,6 +33,11 @@ export function salesToIcs(items: NextSale[]): string {
       `DTEND:${toUtcStamp(end)}`,
       `SUMMARY:${summary}`,
       `DESCRIPTION:${desc}`,
+      'BEGIN:VALARM',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:예매 오픈 1시간 전',
+      'TRIGGER:-PT1H',
+      'END:VALARM',
       'END:VEVENT'
     );
   }

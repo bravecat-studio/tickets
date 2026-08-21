@@ -1,0 +1,32 @@
+name: sms-reminder
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Log the message without sending'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Send 1-hour SMS reminder
+        env:
+          DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+          SMS_TO: ${{ secrets.SMS_TO }}
+          SMS_WEBHOOK_URL: ${{ secrets.SMS_WEBHOOK_URL }}
+          SOLAPI_API_KEY: ${{ secrets.SOLAPI_API_KEY }}
+          SOLAPI_API_SECRET: ${{ secrets.SOLAPI_API_SECRET }}
+          SOLAPI_SENDER: ${{ secrets.SOLAPI_SENDER }}
+        run: node scripts/sms-reminder.mjs

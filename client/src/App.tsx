@@ -20,6 +20,7 @@ import {
   saleWindowsFor,
   type NextSale,
 } from './lib/saleWindows';
+import { reminderAt, smsEventKey, smsMessage, SMS_LEAD_MS } from './lib/smsReminder';
 import { loadPrefs, savePrefs, type StoredPrefs } from './lib/storage';
 
 const CHECKLIST = [
@@ -61,6 +62,7 @@ export default function App() {
   const [practiceUntil, setPracticeUntil] = useState<Date | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const fired = useRef<Set<string>>(new Set());
+  const smsFired = useRef<Set<string>>(new Set());
   const persistTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -118,6 +120,28 @@ export default function App() {
     setPracticeUntil(null);
   }, [armed, target, remain, prefs.notify, prefs.autoOpen]);
 
+  const smsCandidates = prefs.watchIds.length ? watchedUpcoming : upcoming;
+  const nextSmsAt = target ? reminderAt(target.window.at) : null;
+  const smsRemain = nextSmsAt ? msUntil(nextSmsAt, now) : 0;
+
+  useEffect(() => {
+    if (!prefs.smsHourBefore) return;
+    for (const item of smsCandidates) {
+      const remainMs = msUntil(item.window.at, now);
+      if (remainMs > SMS_LEAD_MS || remainMs <= SMS_LEAD_MS - 15 * 60 * 1000) continue;
+      const key = smsEventKey(item);
+      if (smsFired.current.has(key)) continue;
+      smsFired.current.add(key);
+      playCue();
+      setLog((prev) =>
+        [`${formatKstDateTime(new Date())} 문자/알림 · ${item.game.opponentShort} ${item.window.label} 1시간 전`, ...prev].slice(0, 6)
+      );
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(`KIA ${item.window.label} 1시간 전`, { body: smsMessage(item) });
+      }
+    }
+  }, [now, prefs.smsHourBefore, smsCandidates]);
+
   function toggleWatch(id: string) {
     setPrefs((p) => ({
       ...p,
@@ -144,6 +168,18 @@ export default function App() {
     fired.current.clear();
     setPracticeUntil(new Date(Date.now() + 12_000));
     setArmed(true);
+  }
+
+  async function practiceSmsAlert() {
+    if (prefs.smsHourBefore && 'Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+    if (!target) return;
+    playCue();
+    setLog((prev) => [`${formatKstDateTime(new Date())} 1시간 전 알림 연습 · ${target.game.opponentShort}`, ...prev].slice(0, 6));
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('KIA 예매 오픈 1시간 전 (연습)', { body: smsMessage(target) });
+    }
   }
 
   return (
@@ -179,6 +215,13 @@ export default function App() {
               경기 {formatKstDate(target.game.date)} {target.game.startTime} · {target.game.stadium}
               <br />
               오픈 {formatKstDateTime(target.window.at)} · {target.window.channel} · 최대 {target.window.maxTickets}매
+              {nextSmsAt && (
+                <>
+                  <br />
+                  문자 알림 {formatKstDateTime(nextSmsAt)}
+                  {smsRemain > 0 ? ` · ${splitDuration(smsRemain).d}일 ${splitDuration(smsRemain).h}시간 ${splitDuration(smsRemain).m}분 후` : ' · 발송 구간'}
+                </>
+              )}
             </p>
             <div className="digits" aria-label="남은 시간">
               {[
@@ -270,6 +313,47 @@ export default function App() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="panel">
+        <h3>오픈 1시간 전 문자 알림</h3>
+        <p className="hint">
+          GitHub Actions가 10분마다 일정을 보고, 예매 오픈 60–50분 전에 문자를 보냅니다. 이 탭이 열려 있으면 같은 시각에
+          브라우저 알림으로도 알려 드립니다. 전화번호는 저장소 Secrets에만 두고, 이 페이지에는 넣지 마세요.
+        </p>
+        <div className="toggles">
+          <label>
+            <input
+              type="checkbox"
+              checked={prefs.smsHourBefore}
+              onChange={(e) => setPrefs((p) => ({ ...p, smsHourBefore: e.target.checked }))}
+            />
+            1시간 전 브라우저 보조 알림
+          </label>
+        </div>
+        {nextSmsAt && target && (
+          <p className="hero__meta">
+            다음 문자 예정: {formatKstDateTime(nextSmsAt)} ({target.window.label} · vs {target.game.opponentShort})
+          </p>
+        )}
+        <ul className="rules">
+          <li>
+            저장소 Secrets: <code>SMS_TO</code>, 그리고 <code>SOLAPI_API_KEY</code> / <code>SOLAPI_API_SECRET</code> /{' '}
+            <code>SOLAPI_SENDER</code> 또는 <code>SMS_WEBHOOK_URL</code>
+          </li>
+          <li>
+            대상 권종은 <code>sms.config.json</code>의 <code>kinds</code> (기본 일반예매). <code>watchIds</code>가 있으면 그
+            홈경기만 발송
+          </li>
+          <li>
+            스케줄 워크플로는 <code>main</code>에 머지된 뒤에만 매 10분 실행됩니다
+          </li>
+        </ul>
+        <div className="hero__actions">
+          <button className="btn" type="button" onClick={practiceSmsAlert} disabled={!target}>
+            1시간 전 알림 연습
+          </button>
+        </div>
       </section>
 
       <section>

@@ -15,7 +15,8 @@
 - 2026 잔여 홈경기 기준으로 선선예매(D-8 10:00), 선예매(D-8 10:30), 일반예매(D-7 11:00, KST) 카운트다운
 - 대기 모드: 오픈 시각에 알림·효과음 후 공식 예매 탭 열기
 - 관심 경기, 좌석 1·2순위, 준비 체크리스트 (브라우저 localStorage)
-- 오픈 일정 ICS 다운로드
+- 예매 오픈 **1시간 전 문자 알림** (GitHub Actions + 솔라피/웹훅)
+- 오픈 일정 ICS 다운로드 (1시간 전 캘린더 알림 포함)
 - 좌석·요금 참고표 (구단 안내 기준, 예매 시점 표시가 최종)
 
 원정 경기는 상대 구단 예매처를 이용해야 하므로 홈경기만 오픈 계산 대상입니다.
@@ -35,6 +36,24 @@ npm run dev:client
 
 http://localhost:5173 을 엽니다. 선택 API(`npm run dev:server`)는 예전 메모 트래커용이며 Pages 사이트에는 필요 없습니다.
 
+## 오픈 1시간 전 문자
+
+정적 GitHub Pages는 문자를 직접 보내지 못합니다. `sms-reminder` 워크플로가 10분마다 일정을 확인하고, 오픈 60–50분 전에 발송합니다.
+
+1. 저장소 Settings → Secrets에 다음을 넣습니다.
+   - `SMS_TO`: 수신 번호 (예: `01012345678`)
+   - 솔라피: `SOLAPI_API_KEY`, `SOLAPI_API_SECRET`, `SOLAPI_SENDER` (사전등록 발신번호)
+   - 또는 직접 문자 게이트: `SMS_WEBHOOK_URL` (JSON `{ to, text, events }` POST)
+2. `sms.config.json`에서 `kinds`(기본 `general`)와 필요하면 `watchIds`를 지정합니다.
+3. 워크플로는 **기본 브랜치(`main`)** 에서만 스케줄 실행됩니다. Actions에서 `sms-reminder`를 수동 실행하면 테스트할 수 있습니다.
+
+탭을 열어 두면 같은 시각에 브라우저 알림도 뜹니다. 로컬 점검:
+
+```bash
+npm test
+NOW=2026-08-22T10:05:00+09:00 DRY_RUN=1 npm run sms:reminder
+```
+
 ## 정책 요약 (2026)
 
 | 구분 | 오픈 | 최대 매수 | 채널 |
@@ -52,6 +71,6 @@ http://localhost:5173 을 엽니다. 선택 API(`npm run dev:server`)는 예전 
 | `npm run dev:client` | Vite 개발 서버 (5173) |
 | `npm run test` | 예매 오픈 시각 단위 테스트 |
 | `npm run build` | 서버+클라이언트 빌드 |
-| `npm run typecheck` | TypeScript 검사 |
+| `npm run sms:reminder:dry` | 지금 시각 기준 문자 대상 로그 (미발송) |
 
 일정 데이터가 바뀌면 `client/src/data/games.ts` 를 수정하세요.

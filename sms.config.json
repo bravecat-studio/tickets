@@ -1,0 +1,6 @@
+{
+  "enabled": true,
+  "kinds": ["general"],
+  "watchIds": [],
+  "leadMinutes": 60
+}
