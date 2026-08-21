@@ -10,6 +10,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TICKETLINK = 'https://www.ticketlink.co.kr/sports/137/58';
+const TICKETLINK_APP =
+  'https://play.google.com/store/apps/details?id=kr.co.ticketlink.cne&pcampaignid=web_share';
 const POLICIES = [
   { kind: 'season', label: '선선예매', daysBefore: 8, clock: '10:00' },
   { kind: 'early', label: '선예매', daysBefore: 8, clock: '10:30' },
@@ -64,6 +66,7 @@ function buildMessage(item) {
     `vs ${item.game.opponentShort} ${item.game.date} ${item.game.startTime}`,
     `오픈 ${formatOpen(item.at)}`,
     `공식 예매: ${TICKETLINK}`,
+    `앱: ${TICKETLINK_APP}`,
   ].join('\n');
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { GAMES_2026, TBD_HOME_SERIES, type Game } from './data/games';
-import { OFFICIAL_LINKS } from './data/links';
+import { APP_STORES, OFFICIAL_LINKS } from './data/links';
 import { BOOKING_RULES, SALE_POLICIES, type SaleKind } from './data/policy';
 import { SEAT_GRADES, SEAT_TIPS } from './data/seats';
 import { downloadIcs, salesToIcs } from './lib/ics';
@@ -526,8 +526,8 @@ export default function App() {
           <a href={OFFICIAL_LINKS.tigersReservation} target="_blank" rel="noreferrer">
             구단 입장권
           </a>
-          <a href={OFFICIAL_LINKS.ticketlinkKia} target="_blank" rel="noreferrer">
-            티켓링크 KIA (sports/137/58)
+          <a href={APP_STORES.ticketlinkAndroid} target="_blank" rel="noreferrer">
+            티켓링크 앱 (Play)
           </a>
           <a href={OFFICIAL_LINKS.ticketlinkReservePlan} target="_blank" rel="noreferrer">
             티켓링크 좌석 예매 (로그인)
