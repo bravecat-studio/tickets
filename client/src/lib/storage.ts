@@ -7,6 +7,7 @@ export interface StoredPrefs {
   kinds: SaleKind[];
   autoOpen: boolean;
   notify: boolean;
+  smsHourBefore: boolean;
   seatFirst: string;
   seatSecond: string;
   qty: number;
@@ -18,6 +19,7 @@ const DEFAULTS: StoredPrefs = {
   kinds: ['general'],
   autoOpen: true,
   notify: true,
+  smsHourBefore: true,
   seatFirst: '응원특별석',
   seatSecond: 'K8',
   qty: 2,

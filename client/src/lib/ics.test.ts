@@ -11,5 +11,6 @@ describe('salesToIcs', () => {
     expect(ics).toContain('BEGIN:VCALENDAR');
     expect(ics).toContain('SUMMARY:일반예매 오픈 · KIA vs SSG');
     expect(ics).toContain('DTSTART:20260821T020000Z');
+    expect(ics).toContain('TRIGGER:-PT1H');
   });
 });
