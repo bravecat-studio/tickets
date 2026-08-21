@@ -4,12 +4,23 @@
   "terminals": [
     {
       "name": "api",
-      "command": "npm run dev:server"
+      "command": "npm run dev:server",
+      "description": "Tickets REST API (Express + SQLite) on http://localhost:3001"
     },
     {
       "name": "web",
-      "command": "npm run dev:client"
+      "command": "npm run dev:client",
+      "description": "Vite dev server for the React UI on http://localhost:5173 (proxies /api to the API)"
     }
   ],
-  "ports": [3001, 5173]
+  "ports": [
+    {
+      "name": "api",
+      "port": 3001
+    },
+    {
+      "name": "web",
+      "port": 5173
+    }
+  ]
 }
