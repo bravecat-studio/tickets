@@ -310,14 +310,18 @@ export default function App() {
                   )}
                 </div>
                 <div className="game__cta">
-                  {game.venue === 'home' && (
-                    <button className={watched ? 'btn btn--tiny btn--on' : 'btn btn--tiny'} type="button" onClick={() => toggleWatch(game.id)}>
-                      {watched ? '관심 해제' : '관심'}
-                    </button>
+                  {game.venue === 'home' ? (
+                    <>
+                      <button className={watched ? 'btn btn--tiny btn--on' : 'btn btn--tiny'} type="button" onClick={() => toggleWatch(game.id)}>
+                        {watched ? '관심 해제' : '관심'}
+                      </button>
+                      <a className="btn btn--tiny btn--primary" href={OFFICIAL_LINKS.ticketlinkKia} target="_blank" rel="noreferrer">
+                        공식 예매
+                      </a>
+                    </>
+                  ) : (
+                    <span className="mini">상대팀 예매처</span>
                   )}
-                  <a className="btn btn--tiny btn--primary" href={OFFICIAL_LINKS.ticketlinkKia} target="_blank" rel="noreferrer">
-                    공식 예매
-                  </a>
                 </div>
               </article>
             );
