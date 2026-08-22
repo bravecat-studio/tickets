@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { GAMES_2026 } from '../data/games';
+import type { Game } from '../data/games';
+import fixtureGames from '../data/games.fixture.json';
 import { isSeoulAway } from '../data/hosts';
 import { kstDateTime, shiftKstDate, splitDuration } from './kst';
 import { bookingStatus, bookableSales, nextSales, saleWindowsFor } from './saleWindows';
 
-const kiwoom = GAMES_2026.find((g) => g.id === '2026-08-22-kiwoom')!;
-const sunday = GAMES_2026.find((g) => g.id === '2026-08-23-kiwoom')!;
-const ssg = GAMES_2026.find((g) => g.id === '2026-08-28-ssg')!;
-const nc = GAMES_2026.find((g) => g.id === '2026-09-01-nc')!;
+const GAMES = fixtureGames as Game[];
+const kiwoom = GAMES.find((g) => g.id === '2026-08-22-kiwoom')!;
+const sunday = GAMES.find((g) => g.id === '2026-08-23-kiwoom')!;
+const ssg = GAMES.find((g) => g.id === '2026-08-28-ssg')!;
+const nc = GAMES.find((g) => g.id === '2026-09-01-nc')!;
 
 describe('saleWindowsFor', () => {
   it('uses Kiwoom Gocheok policy: D-7 11:00 / 12:00 / 14:00', () => {
@@ -56,7 +58,7 @@ describe('bookingStatus', () => {
 describe('nextSales', () => {
   it('returns the earliest future Seoul-away general sale and skips home games', () => {
     const now = kstDateTime('2026-08-15', '10:00');
-    const next = nextSales(GAMES_2026, now, ['general']);
+    const next = nextSales(GAMES, now, ['general']);
     expect(next.every((item) => isSeoulAway(item.game))).toBe(true);
     expect(next[0].game.id).toBe('2026-08-22-kiwoom');
     expect(next[0].window.kind).toBe('general');
@@ -65,7 +67,7 @@ describe('nextSales', () => {
 
   it('returns no sales for home-only kinds once Seoul-away opens have passed', () => {
     const afterLastOpen = kstDateTime('2026-08-16', '14:01');
-    expect(nextSales(GAMES_2026, afterLastOpen, ['general'])).toEqual([]);
+    expect(nextSales(GAMES, afterLastOpen, ['general'])).toEqual([]);
   });
 
   it('uses LG Ticketlink D-7 11:00 for a Jamsil away game', () => {
@@ -91,7 +93,7 @@ describe('nextSales', () => {
 describe('bookableSales', () => {
   it('keeps a Seoul-away game that is already on sale', () => {
     const now = kstDateTime('2026-08-22', '12:00');
-    const items = bookableSales(GAMES_2026, now, ['general']);
+    const items = bookableSales(GAMES, now, ['general']);
     expect(items.map((item) => item.game.id)).toContain('2026-08-22-kiwoom');
     expect(items.map((item) => item.game.id)).toContain('2026-08-23-kiwoom');
     expect(items.every((item) => isSeoulAway(item.game))).toBe(true);

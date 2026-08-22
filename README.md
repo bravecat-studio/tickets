@@ -22,6 +22,7 @@
 - 대기 모드: 오픈 시각에 알림·효과음 후 상대 구단 공식 예매 탭 열기
 - 관심 경기, 좌석 1·2순위, 준비 체크리스트 (브라우저 localStorage)
 - 서울 원정 예매 오픈 **1시간 전 문자 알림** (GitHub Actions + 솔라피/웹훅)
+- 잔여 경기 일정 **자동 갱신** (우천 재편성 포함, GitHub Actions + 네이버 스포츠 KBO)
 - 오픈 일정 ICS 다운로드 (1시간 전 캘린더 알림 포함)
 - 구장별 좌석·요금 참고표 (홈 구단 안내 기준, 예매 시점 표시가 최종)
 
@@ -103,13 +104,21 @@ NOW=2026-08-16T13:05:00+09:00 DRY_RUN=1 npm run sms:reminder
 
 우천·재편성 시 홈 구단/KBO 공지가 우선입니다.
 
+## 잔여 일정 자동 갱신
+
+`games.json`은 손으로 고치지 않습니다. `update-schedule` 워크플로가 **매일 10:20·22:20 KST**에 네이버 스포츠 KBO 일정을 가져와 잔여 KIA 경기를 덮어씁니다. 우천 취소는 빠지고, 재편성(잠실·고척 포함)이 공지되면 예매 오픈·문자 알람 대상에 다시 들어갑니다.
+
+- Actions → `update-schedule` → **Run workflow** 로 지금 한 번 돌릴 수 있습니다.
+- `dry_run`을 켜면 커밋하지 않고 로그만 남깁니다.
+- 로컬: `npm run schedule:sync` (미리보기 `npm run schedule:sync:dry`)
+- 예매 정책·구장 URL은 그대로 `client/src/data/hosts.json` 을 수정하세요.
+
 ## 개발 스크립트
 
 | 명령 | 설명 |
 | --- | --- |
 | `npm run dev:client` | Vite 개발 서버 (5173) |
-| `npm run test` | 예매 오픈 시각 단위 테스트 + 문자 발송·재시도·대체 알림 통합 테스트 |
+| `npm run test` | 예매 오픈 시각 단위 테스트 + 문자 발송·재시도·대체 알림 통합 테스트 + 일정 동기화 테스트 |
 | `npm run build` | 서버+클라이언트 빌드 |
+| `npm run schedule:sync` | 네이버 스포츠에서 잔여 일정을 가져와 `games.json` 갱신 |
 | `npm run sms:reminder:dry` | 지금 시각 기준 문자 대상 로그 (미발송). 서울 원정이 아니면 대상 없음 |
-
-일정 데이터가 바뀌면 `client/src/data/games.json` 과 `client/src/data/hosts.json` 을 수정하세요.

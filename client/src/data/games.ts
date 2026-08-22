@@ -1,4 +1,6 @@
 import games from './games.json';
+import tbd from './tbd.json';
+import scheduleMeta from './schedule-meta.json';
 import type { HostId } from './hosts';
 
 export type Venue = 'home' | 'away';
@@ -19,17 +21,30 @@ export interface Game {
   host?: HostId;
 }
 
+export interface SeoulAwayTbd {
+  opponent: string;
+  stadium: string;
+  reason: string;
+}
+
+export interface ScheduleMeta {
+  source: string;
+  sourceLabel: string;
+  updatedAt: string;
+  fromDate: string;
+  toDate: string;
+  gameCount: number;
+  tbdCount: number;
+}
+
 /**
- * 2026 잔여 일정 (2026-08-21 기준).
- * 출처: KIA 공식 일정, 야구나라, 나무위키 9월 편성.
+ * 잔여 KIA 일정. GitHub Actions `update-schedule`이 네이버 스포츠 KBO 일정으로 갱신합니다.
  * 예매 오픈·알람은 서울 원정(잠실·고척)만 계산합니다.
  * 우천·재편성 시 구단/KBO 공지가 우선입니다.
  */
 export const GAMES_2026: Game[] = games as Game[];
 
-/** 우천·미편성으로 날짜가 나오면 서울 원정만 다시 넣습니다. */
-export const TBD_SEOUL_AWAY = [
-  { opponent: 'LG 트윈스', stadium: '잠실야구장', reason: '정규 잠실 원정은 8/7–9 3연전으로 종료. 재편성 시만 대상' },
-  { opponent: '두산 베어스', stadium: '잠실야구장', reason: '정규 잠실 원정은 6/26–28 3연전으로 종료. 재편성 시만 대상' },
-  { opponent: '키움 히어로즈', stadium: '고척스카이돔', reason: '정규 고척 원정은 8/21–23 3연전. 이후 재편성 시만 대상' },
-] as const;
+/** 잔여 서울 원정이 없는 상대. 재편성 일정이 들어오면 games.json으로 옮겨집니다. */
+export const TBD_SEOUL_AWAY: readonly SeoulAwayTbd[] = tbd as SeoulAwayTbd[];
+
+export const SCHEDULE_META: ScheduleMeta = scheduleMeta as ScheduleMeta;

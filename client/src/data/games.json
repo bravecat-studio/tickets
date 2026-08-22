@@ -1,16 +1,5 @@
 [
   {
-    "id": "2026-08-21-kiwoom",
-    "date": "2026-08-21",
-    "startTime": "19:00",
-    "opponent": "키움 히어로즈",
-    "opponentShort": "키움",
-    "venue": "away",
-    "stadium": "고척스카이돔",
-    "series": "서울 원정 3연전",
-    "host": "kiwoom"
-  },
-  {
     "id": "2026-08-22-kiwoom",
     "date": "2026-08-22",
     "startTime": "18:00",
@@ -70,7 +59,7 @@
     "opponentShort": "SSG",
     "venue": "home",
     "stadium": "광주-기아 챔피언스필드",
-    "series": "홈 3연전 · 시즌 마지막 주말 18시권"
+    "series": "홈 3연전"
   },
   {
     "id": "2026-08-29-ssg",
@@ -130,7 +119,7 @@
     "opponentShort": "KT",
     "venue": "home",
     "stadium": "광주-기아 챔피언스필드",
-    "series": "홈 3연전 · 정규 3연전 마지막 홈"
+    "series": "홈 3연전"
   },
   {
     "id": "2026-09-05-kt",
@@ -145,7 +134,7 @@
   {
     "id": "2026-09-06-kt",
     "date": "2026-09-06",
-    "startTime": "14:00",
+    "startTime": "17:00",
     "opponent": "kt wiz",
     "opponentShort": "KT",
     "venue": "home",
