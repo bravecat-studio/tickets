@@ -2,5 +2,6 @@
   "enabled": true,
   "kinds": ["general"],
   "watchIds": [],
-  "leadMinutes": 60
+  "leadMinutes": 60,
+  "cronIntervalMinutes": 60
 }

@@ -43,9 +43,16 @@ function saleWindowsFor(gameDate) {
   }));
 }
 
-function isSmsDue(saleAt, now, leadMs, intervalMs) {
+export function isSmsDue(saleAt, now, leadMs, intervalMs) {
   const remain = saleAt.getTime() - now.getTime();
   return remain > leadMs - intervalMs && remain <= leadMs;
+}
+
+/** GitHub variable SMS_REMINDER_ENABLED=false or sms.config.json enabled=false turns the scheduler off. FORCE=1 overrides. */
+export function isSchedulerEnabled(config, env = process.env) {
+  if (env.FORCE === '1' || env.FORCE === 'true') return true;
+  if (String(env.SMS_REMINDER_ENABLED ?? '').toLowerCase() === 'false') return false;
+  return config.enabled !== false;
 }
 
 function formatOpen(at) {
@@ -70,9 +77,9 @@ function buildMessage(item) {
   ].join('\n');
 }
 
-function dueSales(games, config, now) {
+export function dueSales(games, config, now) {
   const leadMs = (config.leadMinutes ?? 60) * 60 * 1000;
-  const intervalMs = 10 * 60 * 1000;
+  const intervalMs = (config.cronIntervalMinutes ?? 60) * 60 * 1000;
   const kinds = new Set(config.kinds?.length ? config.kinds : ['general']);
   const watch = new Set(config.watchIds ?? []);
   const items = [];
@@ -120,15 +127,34 @@ async function sendSolapi(to, from, text, apiKey, apiSecret) {
 
 export function runSelfTest() {
   const games = loadJson('client/src/data/games.json');
-  const config = { enabled: true, kinds: ['general'], watchIds: [], leadMinutes: 60 };
+  const config = {
+    enabled: true,
+    kinds: ['general'],
+    watchIds: [],
+    leadMinutes: 60,
+    cronIntervalMinutes: 60,
+  };
   const now = kstDateTime('2026-08-22', '10:05');
   const due = dueSales(games, config, now);
   if (due.length !== 1 || due[0].game.id !== '2026-08-29-ssg') {
     throw new Error(`self-test failed: ${JSON.stringify(due.map((d) => d.game.id))}`);
   }
+  const laterInHour = dueSales(games, config, kstDateTime('2026-08-22', '10:45'));
+  if (laterInHour.length !== 1 || laterInHour[0].game.id !== '2026-08-29-ssg') {
+    throw new Error('self-test failed: hourly window should still match at :45');
+  }
   const tooEarly = dueSales(games, config, kstDateTime('2026-08-22', '09:50'));
   if (tooEarly.length !== 0) {
     throw new Error('self-test failed: expected no SMS before the 1-hour window');
+  }
+  if (isSchedulerEnabled({ enabled: false }, {}) !== false) {
+    throw new Error('self-test failed: enabled=false should turn the scheduler off');
+  }
+  if (isSchedulerEnabled({ enabled: true }, { SMS_REMINDER_ENABLED: 'false' }) !== false) {
+    throw new Error('self-test failed: SMS_REMINDER_ENABLED=false should turn the scheduler off');
+  }
+  if (isSchedulerEnabled({ enabled: false }, { FORCE: '1' }) !== true) {
+    throw new Error('self-test failed: FORCE=1 should override a disabled scheduler');
   }
   console.log('sms-reminder self-test ok');
 }
@@ -142,11 +168,9 @@ async function main() {
   const config = loadJson('sms.config.json');
   const games = loadJson('client/src/data/games.json');
   const now = process.env.NOW ? new Date(process.env.NOW) : new Date();
-  const dryRun =
-    process.env.DRY_RUN === '1' || process.env.DRY_RUN === 'true' || !config.enabled;
 
-  if (!config.enabled && process.env.FORCE !== '1') {
-    console.log('sms.config.json enabled=false; skip');
+  if (!isSchedulerEnabled(config) && process.env.DRY_RUN !== '1' && process.env.DRY_RUN !== 'true') {
+    console.log('SMS scheduler off (sms.config.json enabled=false or SMS_REMINDER_ENABLED=false); skip');
     return;
   }
 
@@ -164,8 +188,9 @@ async function main() {
   }));
   console.log(`due ${due.length} reminder(s):\n${text}`);
 
-  if (dryRun) {
-    console.log('dry-run: not sending');
+  const dryRun = process.env.DRY_RUN === '1' || process.env.DRY_RUN === 'true';
+  if (dryRun || !isSchedulerEnabled(config)) {
+    console.log(dryRun ? 'dry-run: not sending' : 'scheduler off: not sending');
     return;
   }
 

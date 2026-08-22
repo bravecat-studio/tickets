@@ -11,9 +11,13 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
+    "baseUrl": ".",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@sms-config": ["../sms.config.json"]
+    }
   },
   "include": ["src", "vite.config.ts"]
 }

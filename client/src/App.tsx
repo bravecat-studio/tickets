@@ -20,7 +20,7 @@ import {
   saleWindowsFor,
   type NextSale,
 } from './lib/saleWindows';
-import { reminderAt, smsEventKey, smsMessage, SMS_LEAD_MS } from './lib/smsReminder';
+import { isSmsDue, reminderAt, smsEventKey, smsMessage, SMS_SCHEDULER } from './lib/smsReminder';
 import { loadPrefs, savePrefs, type StoredPrefs } from './lib/storage';
 
 const CHECKLIST = [
@@ -127,8 +127,7 @@ export default function App() {
   useEffect(() => {
     if (!prefs.smsHourBefore) return;
     for (const item of smsCandidates) {
-      const remainMs = msUntil(item.window.at, now);
-      if (remainMs > SMS_LEAD_MS || remainMs <= SMS_LEAD_MS - 15 * 60 * 1000) continue;
+      if (!isSmsDue(item.window.at, now)) continue;
       const key = smsEventKey(item);
       if (smsFired.current.has(key)) continue;
       smsFired.current.add(key);
@@ -318,9 +317,19 @@ export default function App() {
       <section className="panel">
         <h3>오픈 1시간 전 문자 알림</h3>
         <p className="hint">
-          GitHub Actions가 10분마다 일정을 보고, 예매 오픈 60–50분 전에 문자를 보냅니다. 이 탭이 열려 있으면 같은 시각에
-          브라우저 알림으로도 알려 드립니다. 전화번호는 저장소 Secrets에만 두고, 이 페이지에는 넣지 마세요.
+          GitHub Actions가 매시 정각에 일정을 보고, 예매 오픈 1시간 전부터 오픈 직전 사이에 문자를 보냅니다. 이 탭이 열려
+          있으면 같은 시각에 브라우저 알림으로도 알려 드립니다. 전화번호는 저장소 Secrets에만 두고, 이 페이지에는 넣지
+          마세요.
         </p>
+        <div className="scheduler-row">
+          <span
+            className={SMS_SCHEDULER.enabled ? 'status-pill status-pill--on' : 'status-pill status-pill--off'}
+            title="sms.config.json enabled"
+          >
+            문자 스케줄러 {SMS_SCHEDULER.enabled ? 'ON' : 'OFF'}
+          </span>
+          <span className="mini">매시 정각 · 오픈 1시간 전</span>
+        </div>
         <div className="toggles">
           <label>
             <input
@@ -328,7 +337,7 @@ export default function App() {
               checked={prefs.smsHourBefore}
               onChange={(e) => setPrefs((p) => ({ ...p, smsHourBefore: e.target.checked }))}
             />
-            1시간 전 브라우저 보조 알림
+            이 탭에서 1시간 전 브라우저 알림
           </label>
         </div>
         {nextSmsAt && target && (
@@ -338,6 +347,10 @@ export default function App() {
         )}
         <ul className="rules">
           <li>
+            문자 스케줄러 on/off: <code>sms.config.json</code>의 <code>enabled</code> (이 사이트에 반영하려면{' '}
+            <code>main</code>에 머지). 커밋 없이 끄려면 저장소 Variables에 <code>SMS_REMINDER_ENABLED=false</code>
+          </li>
+          <li>
             저장소 Secrets: <code>SMS_TO</code>, 그리고 <code>SOLAPI_API_KEY</code> / <code>SOLAPI_API_SECRET</code> /{' '}
             <code>SOLAPI_SENDER</code> 또는 <code>SMS_WEBHOOK_URL</code>
           </li>
@@ -346,7 +359,7 @@ export default function App() {
             홈경기만 발송
           </li>
           <li>
-            스케줄 워크플로는 <code>main</code>에 머지된 뒤에만 매 10분 실행됩니다
+            스케줄 워크플로는 <code>main</code>에 머지된 뒤에만 매시 정각에 실행됩니다
           </li>
         </ul>
         <div className="hero__actions">

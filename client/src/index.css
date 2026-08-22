@@ -263,6 +263,34 @@ h1 {
   border-color: var(--red-hot);
 }
 
+.scheduler-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 4px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.status-pill--on {
+  background: rgba(61, 214, 140, 0.2);
+  color: #3dd68c;
+}
+
+.scheduler-row .mini {
+  display: inline;
+  color: var(--mute);
+}
+
 .log,
 .rules,
 .tbd,

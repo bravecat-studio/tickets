@@ -2,11 +2,16 @@ name: sms-reminder
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    # Hourly. GitHub cron is UTC; the due window is the 60 minutes before open.
+    - cron: '0 * * * *'
   workflow_dispatch:
     inputs:
       dry_run:
         description: 'Log the message without sending'
+        type: boolean
+        default: false
+      force:
+        description: 'Run even if the SMS scheduler is off'
         type: boolean
         default: false
 
@@ -15,6 +20,9 @@ permissions:
 
 jobs:
   remind:
+    # Scheduled runs honor repo variable SMS_REMINDER_ENABLED (unset/true = on).
+    # Manual dispatch always starts; the script still respects sms.config.json unless force=true.
+    if: ${{ github.event_name != 'schedule' || vars.SMS_REMINDER_ENABLED != 'false' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,6 +32,8 @@ jobs:
       - name: Send 1-hour SMS reminder
         env:
           DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+          FORCE: ${{ github.event.inputs.force == 'true' && '1' || '0' }}
+          SMS_REMINDER_ENABLED: ${{ vars.SMS_REMINDER_ENABLED }}
           SMS_TO: ${{ secrets.SMS_TO }}
           SMS_WEBHOOK_URL: ${{ secrets.SMS_WEBHOOK_URL }}
           SOLAPI_API_KEY: ${{ secrets.SOLAPI_API_KEY }}

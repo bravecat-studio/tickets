@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { GAMES_2026 } from '../data/games';
 import { kstDateTime } from './kst';
 import { nextSales } from './saleWindows';
-import { dueSmsSales, isSmsDue, reminderAt, smsMessage } from './smsReminder';
+import { dueSmsSales, isSmsDue, reminderAt, SMS_SCHEDULER, smsMessage } from './smsReminder';
 
 describe('sms reminder timing', () => {
   const open = kstDateTime('2026-08-22', '11:00');
@@ -11,11 +11,12 @@ describe('sms reminder timing', () => {
     expect(reminderAt(open).toISOString()).toBe(kstDateTime('2026-08-22', '10:00').toISOString());
   });
 
-  it('is due inside the 50–60 minute window used by the 10-minute cron', () => {
+  it('is due inside the 0–60 minute window used by the hourly cron', () => {
     expect(isSmsDue(open, kstDateTime('2026-08-22', '10:00'))).toBe(true);
-    expect(isSmsDue(open, kstDateTime('2026-08-22', '10:05'))).toBe(true);
-    expect(isSmsDue(open, kstDateTime('2026-08-22', '10:10'))).toBe(false);
+    expect(isSmsDue(open, kstDateTime('2026-08-22', '10:30'))).toBe(true);
+    expect(isSmsDue(open, kstDateTime('2026-08-22', '10:59'))).toBe(true);
     expect(isSmsDue(open, kstDateTime('2026-08-22', '09:59'))).toBe(false);
+    expect(isSmsDue(open, kstDateTime('2026-08-22', '09:00'))).toBe(false);
     expect(isSmsDue(open, kstDateTime('2026-08-22', '11:00'))).toBe(false);
   });
 
@@ -30,5 +31,10 @@ describe('sms reminder timing', () => {
     expect(smsMessage(due[0])).toContain(
       'https://play.google.com/store/apps/details?id=kr.co.ticketlink.cne'
     );
+  });
+
+  it('mirrors sms.config.json scheduler on/off and hourly interval', () => {
+    expect(SMS_SCHEDULER.cronIntervalMinutes).toBe(60);
+    expect(typeof SMS_SCHEDULER.enabled).toBe('boolean');
   });
 });
