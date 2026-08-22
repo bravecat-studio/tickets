@@ -26,6 +26,8 @@ on:
 
 permissions:
   contents: write
+  # The reminder step files a GitHub issue when no SMS channel delivers.
+  issues: write
 
 concurrency:
   group: sms-reminder
@@ -83,6 +85,7 @@ jobs:
           DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
           FORCE: ${{ github.event.inputs.force == 'true' && '1' || '0' }}
           SMS_REMINDER_ENABLED: ${{ vars.SMS_REMINDER_ENABLED }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SMS_TO: ${{ secrets.SMS_TO }}
           SMS_WEBHOOK_URL: ${{ secrets.SMS_WEBHOOK_URL }}
           SOLAPI_API_KEY: ${{ secrets.SOLAPI_API_KEY }}

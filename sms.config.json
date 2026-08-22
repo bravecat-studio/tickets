@@ -5,5 +5,6 @@
   ],
   "watchIds": [],
   "leadMinutes": 60,
-  "cronIntervalMinutes": 60
+  "cronIntervalMinutes": 60,
+  "issueFallback": true
 }
