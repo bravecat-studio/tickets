@@ -323,7 +323,7 @@ h1 {
   box-shadow: inset 3px 0 0 #3dd68c;
 }
 
-.game--away {
+.game--out_of_scope {
   opacity: 0.78;
 }
 

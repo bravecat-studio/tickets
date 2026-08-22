@@ -1,25 +1,29 @@
-# KIA 타이거즈 예매 일정 도우미
+# KIA 타이거즈 서울 원정 예매 도우미
 
-비상업·개인 구매용 GitHub Pages 사이트입니다. 기아 타이거즈 홈경기 **예매 오픈 시각**을 계산하고, 오픈 시각에 **공식 티켓링크**로 안내합니다.
+비상업·개인 구매용 GitHub Pages 사이트입니다. **기아 타이거즈 서울 원정**(잠실 LG·두산, 고척 키움) **예매 오픈 시각**만 계산하고, 그 경우에만 알림을 보냅니다. 오픈 시각에는 **상대 구단 공식 예매처**(NOL 인터파크 또는 티켓링크)로 안내합니다.
+
+광주 홈경기와 서울 밖 원정(창원·대전·수원 등)은 일정 계산·문자·브라우저 알림 대상이 아닙니다.
 
 실제 좌석 점유·결제·매크로는 포함하지 않습니다. 구매는 항상 아래 공식 채널에서 완료하세요.
 
-- 구단 입장권: https://tigers.co.kr/ticket/reservation
-- 티켓링크 KIA: https://www.ticketlink.co.kr/sports/137/58
-- 티켓링크 좌석 예매(로그인): https://www.ticketlink.co.kr/reserve/plan/schedule/387652530?menuIndex=reserve
+- 키움(고척) NOL: https://tickets.interpark.com/special/sports/hero
+- LG(잠실) 티켓링크: https://www.ticketlink.co.kr/sports/137/62
+- NOL 스포츠: https://tickets.interpark.com/contents/sports
+- KIA 경기 일정: https://tigers.co.kr/game/schedule
 
 배포 주소(GitHub Pages 활성화 후): https://bravecat-studio.github.io/tickets/
 
 ## 무엇을 하나요
 
-- 2026 잔여 홈경기 기준으로 선선예매(D-8 10:00), 선예매(D-8 10:30), 일반예매(D-7 11:00, KST) 카운트다운
-- 대기 모드: 오픈 시각에 알림·효과음 후 공식 예매 탭 열기
+- 서울 원정만: 상대 구단 정책으로 선예매·일반예매 오픈 시각을 한국 시간으로 계산
+  - 키움 고척: 일반예매 D-7 14:00 (연간회원 11:00, 멤버십 12:00) · NOL 인터파크
+  - LG 잠실: 일반예매 D-7 11:00 (연간회원 D-9 11:00) · 티켓링크
+  - 두산 잠실: 일반예매 D-7 11:00 (베어스클럽 10:00) · NOL 인터파크
+- 대기 모드: 오픈 시각에 알림·효과음 후 상대 구단 공식 예매 탭 열기
 - 관심 경기, 좌석 1·2순위, 준비 체크리스트 (브라우저 localStorage)
-- 예매 오픈 **1시간 전 문자 알림** (GitHub Actions + 솔라피/웹훅)
+- 서울 원정 예매 오픈 **1시간 전 문자 알림** (GitHub Actions + 솔라피/웹훅)
 - 오픈 일정 ICS 다운로드 (1시간 전 캘린더 알림 포함)
-- 좌석·요금 참고표 (구단 안내 기준, 예매 시점 표시가 최종)
-
-원정 경기는 상대 구단 예매처를 이용해야 하므로 홈경기만 오픈 계산 대상입니다.
+- 구장별 좌석·요금 참고표 (홈 구단 안내 기준, 예매 시점 표시가 최종)
 
 ## GitHub Pages
 
@@ -38,7 +42,7 @@ http://localhost:5173 을 엽니다. 선택 API(`npm run dev:server`)는 예전 
 
 ## 오픈 1시간 전 문자
 
-정적 GitHub Pages는 문자를 직접 보내지 못합니다. `sms-reminder` 워크플로가 **매시 정각**에 일정을 확인하고, 오픈 1시간 전부터 오픈 직전 사이에 발송합니다.
+정적 GitHub Pages는 문자를 직접 보내지 못합니다. `sms-reminder` 워크플로가 **매시 정각**에 일정을 확인하고, **서울 원정** 오픈 1시간 전부터 오픈 직전 사이에만 발송합니다. 홈경기·서울 밖 원정 창은 건너뜁니다.
 
 ### 스케줄러 on/off
 
@@ -61,7 +65,7 @@ http://localhost:5173 을 엽니다. 선택 API(`npm run dev:server`)는 예전 
    - 솔라피: `SOLAPI_API_KEY`, `SOLAPI_API_SECRET`, `SOLAPI_SENDER` (사전등록 발신번호)
    - 또는 직접 문자 게이트: `SMS_WEBHOOK_URL` (JSON `{ to, text, events }` POST)
 2. 솔라피 API Key는 **허용 IP를 "모든 IP 허용"** 으로 발급해야 합니다. GitHub 호스팅 러너는 실행마다 IP가 바뀌어서 특정 IP만 허용하면 발송이 차단됩니다.
-3. `sms.config.json`에서 `kinds`(기본 `general`)와 필요하면 `watchIds`를 지정합니다.
+3. `sms.config.json`에서 `kinds`(기본 `general`)와 필요하면 `watchIds`를 지정합니다. `watchIds`가 있어도 서울 원정이 아니면 보내지 않습니다.
 4. 워크플로는 **기본 브랜치(`main`)** 에서만 스케줄 실행됩니다. Actions에서 `sms-reminder`를 수동 실행하면 테스트할 수 있습니다.
 
 ### 발송이 실패하면
@@ -86,18 +90,18 @@ http://localhost:5173 을 엽니다. 선택 API(`npm run dev:server`)는 예전 
 
 ```bash
 npm test
-NOW=2026-08-22T10:05:00+09:00 DRY_RUN=1 npm run sms:reminder
+NOW=2026-08-16T13:05:00+09:00 DRY_RUN=1 npm run sms:reminder
 ```
 
-## 정책 요약 (2026)
+## 정책 요약 (2026 서울 원정)
 
-| 구분 | 오픈 | 최대 매수 | 채널 |
+| 상대(구장) | 일반예매 | 선예매 | 채널 |
 | --- | --- | --- | --- |
-| 선선예매 (시즌권) | 경기일 D-8 10:00 | 2 | 타이거즈 앱 |
-| 선예매 (얼리패스) | 경기일 D-8 10:30 | 2 | 타이거즈 앱 |
-| 일반예매 | 경기일 D-7 11:00 | 8 | 티켓링크 웹·앱 / 타이거즈 앱 |
+| 키움 (고척) | 경기일 D-7 14:00 | 연간회원 D-7 11:00 / 멤버십 D-7 12:00 | NOL 인터파크 |
+| LG (잠실) | 경기일 D-7 11:00 | 연간회원 D-9 11:00 | 티켓링크 |
+| 두산 (잠실) | 경기일 D-7 11:00 | 베어스클럽 D-7 10:00 | NOL 인터파크 |
 
-온라인 예매는 구단 FAQ 기준 경기 시작 2시간 전까지, 취소는 시작 4시간 전까지입니다. 우천·재편성 시 구단/KBO 공지가 우선입니다.
+우천·재편성 시 홈 구단/KBO 공지가 우선입니다.
 
 ## 개발 스크립트
 
@@ -106,6 +110,6 @@ NOW=2026-08-22T10:05:00+09:00 DRY_RUN=1 npm run sms:reminder
 | `npm run dev:client` | Vite 개발 서버 (5173) |
 | `npm run test` | 예매 오픈 시각 단위 테스트 + 문자 발송·재시도·대체 알림 통합 테스트 |
 | `npm run build` | 서버+클라이언트 빌드 |
-| `npm run sms:reminder:dry` | 지금 시각 기준 문자 대상 로그 (미발송) |
+| `npm run sms:reminder:dry` | 지금 시각 기준 문자 대상 로그 (미발송). 서울 원정이 아니면 대상 없음 |
 
-일정 데이터가 바뀌면 `client/src/data/games.ts` 를 수정하세요.
+일정 데이터가 바뀌면 `client/src/data/games.json` 과 `client/src/data/hosts.json` 을 수정하세요.

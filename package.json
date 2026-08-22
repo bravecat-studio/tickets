@@ -2,7 +2,7 @@
   "name": "tickets",
   "version": "0.1.0",
   "private": true,
-  "description": "KIA Tigers personal ticket-sale helper (GitHub Pages) plus optional local notes API.",
+  "description": "KIA Tigers Seoul-away ticket-sale helper (GitHub Pages) plus optional local notes API.",
   "workspaces": [
     "server",
     "client"

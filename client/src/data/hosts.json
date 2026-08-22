@@ -1,0 +1,140 @@
+{
+  "kiwoom": {
+    "id": "kiwoom",
+    "name": "키움 히어로즈",
+    "short": "키움",
+    "stadium": "고척스카이돔",
+    "vendor": "NOL 인터파크",
+    "ticketUrl": "https://tickets.interpark.com/special/sports/hero",
+    "clubTicketUrl": "https://heroesbaseball.co.kr/ticket/normal/view.do",
+    "clubScheduleUrl": "https://heroesbaseball.co.kr/game/schedule/view.do",
+    "appUrl": "https://play.google.com/store/apps/details?id=com.interpark.ticket",
+    "loginUrl": "https://nol.interpark.com/ticket",
+    "awayCheering": "3루",
+    "onlineClose": { "mode": "hoursBeforeStart", "hours": 2 },
+    "policies": [
+      {
+        "kind": "season",
+        "label": "연간회원 선예매",
+        "when": "경기일 D-7",
+        "openClock": "11:00",
+        "daysBefore": 7,
+        "maxTickets": 8,
+        "channel": "구단 홈페이지 / NOL 인터파크",
+        "eligible": "연간회원"
+      },
+      {
+        "kind": "early",
+        "label": "히어로 멤버십 선예매",
+        "when": "경기일 D-7",
+        "openClock": "12:00",
+        "daysBefore": 7,
+        "maxTickets": 8,
+        "channel": "구단 홈페이지 / NOL 인터파크",
+        "eligible": "히어로 멤버십"
+      },
+      {
+        "kind": "general",
+        "label": "일반예매",
+        "when": "경기일 D-7",
+        "openClock": "14:00",
+        "daysBefore": 7,
+        "maxTickets": 8,
+        "channel": "구단 홈페이지 / NOL 인터파크",
+        "eligible": "회원 누구나"
+      }
+    ],
+    "rules": [
+      "고척 원정은 키움 홈경기 정책을 따릅니다. 예매처는 티켓링크가 아니라 NOL 인터파크입니다.",
+      "일반예매: 경기 7일 전 14:00. 연간회원은 3시간 전(11:00), 히어로 멤버십은 2시간 전(12:00).",
+      "놀티켓 고객센터 1544-1555 (스포츠 2번).",
+      "KIA 원정 응원석은 3루입니다. 1루는 키움 홈 응원 구역입니다.",
+      "하절기 요금은 5/19~9/6에 적용됩니다. 가격·잔여석은 예매 시점 표시가 최종입니다."
+    ]
+  },
+  "lg": {
+    "id": "lg",
+    "name": "LG 트윈스",
+    "short": "LG",
+    "stadium": "잠실야구장",
+    "vendor": "티켓링크",
+    "ticketUrl": "https://www.ticketlink.co.kr/sports/137/62",
+    "clubTicketUrl": "https://www.lgtwins.com/ticket/general",
+    "clubScheduleUrl": "https://www.lgtwins.com/game/schedule",
+    "appUrl": "https://play.google.com/store/apps/details?id=kr.co.ticketlink.cne&pcampaignid=web_share",
+    "loginUrl": "https://www.ticketlink.co.kr/auth/login",
+    "awayCheering": "3루",
+    "onlineClose": { "mode": "hoursAfterStart", "hours": 1 },
+    "policies": [
+      {
+        "kind": "season",
+        "label": "연간회원 선예매",
+        "when": "경기일 D-9",
+        "openClock": "11:00",
+        "daysBefore": 9,
+        "maxTickets": 8,
+        "channel": "티켓링크 웹·앱 / LG 트윈스 앱",
+        "eligible": "연간회원"
+      },
+      {
+        "kind": "general",
+        "label": "일반예매",
+        "when": "경기일 D-7",
+        "openClock": "11:00",
+        "daysBefore": 7,
+        "maxTickets": 8,
+        "channel": "티켓링크 웹·앱 / LG 트윈스 앱",
+        "eligible": "회원 누구나"
+      }
+    ],
+    "rules": [
+      "잠실 LG전은 LG 홈경기 정책을 따릅니다. 예매처는 티켓링크입니다.",
+      "일반예매: 경기 7일 전 11:00 ~ 경기 시작 1시간 후.",
+      "연간회원 선예매는 경기 9일 전 11:00.",
+      "1인 최대 8매. 취소는 경기 시작 4시간 전까지.",
+      "KIA 원정 응원석은 3루(오렌지석 반대편)입니다."
+    ]
+  },
+  "doosan": {
+    "id": "doosan",
+    "name": "두산 베어스",
+    "short": "두산",
+    "stadium": "잠실야구장",
+    "vendor": "NOL 인터파크",
+    "ticketUrl": "https://tickets.interpark.com/special/sports/doosan",
+    "clubTicketUrl": "https://www.doosanbears.com/",
+    "clubScheduleUrl": "https://www.doosanbears.com/",
+    "appUrl": "https://play.google.com/store/apps/details?id=com.interpark.ticket",
+    "loginUrl": "https://nol.interpark.com/ticket",
+    "awayCheering": "1루",
+    "onlineClose": { "mode": "hoursAfterStart", "hours": 1 },
+    "policies": [
+      {
+        "kind": "early",
+        "label": "베어스클럽 선예매",
+        "when": "경기일 D-7",
+        "openClock": "10:00",
+        "daysBefore": 7,
+        "maxTickets": 8,
+        "channel": "구단 홈페이지 / NOL 인터파크",
+        "eligible": "베어스클럽"
+      },
+      {
+        "kind": "general",
+        "label": "일반예매",
+        "when": "경기일 D-7",
+        "openClock": "11:00",
+        "daysBefore": 7,
+        "maxTickets": 8,
+        "channel": "구단 홈페이지 / NOL 인터파크",
+        "eligible": "회원 누구나"
+      }
+    ],
+    "rules": [
+      "잠실 두산전은 두산 홈경기 정책을 따릅니다. 예매처는 NOL 인터파크입니다.",
+      "일반예매: 경기 7일 전 11:00. 베어스클럽 선예매는 같은 날 10:00.",
+      "예매는 경기 시작 1시간 후까지, 취소는 시작 4시간 전까지.",
+      "KIA 원정 응원석은 1루입니다. 3루는 두산 홈 응원 구역입니다."
+    ]
+  }
+}

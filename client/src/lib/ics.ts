@@ -1,3 +1,4 @@
+import { ticketUrlFor } from '../data/hosts';
 import type { NextSale } from './saleWindows';
 
 function pad(n: number): string {
@@ -15,16 +16,16 @@ export function salesToIcs(items: NextSale[]): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//KIA Tigers personal ticket helper//KO',
+    'PRODID:-//KIA Tigers Seoul away ticket helper//KO',
     'CALSCALE:GREGORIAN',
-    'X-WR-CALNAME:KIA 타이거즈 예매 오픈',
+    'X-WR-CALNAME:KIA 타이거즈 서울 원정 예매 오픈',
   ];
   for (const item of items) {
     const start = item.window.at;
     const end = new Date(start.getTime() + 30 * 60 * 1000);
     const uid = `${item.game.id}-${item.window.kind}@tigers-helper`;
-    const summary = `${item.window.label} 오픈 · KIA vs ${item.game.opponentShort}`;
-    const desc = `${item.game.date} ${item.game.startTime} ${item.game.stadium}\\n공식 예매: https://www.ticketlink.co.kr/sports/137/58`;
+    const summary = `${item.window.label} 오픈 · 서울 원정 vs ${item.game.opponentShort}`;
+    const desc = `${item.game.date} ${item.game.startTime} ${item.game.stadium}\\n공식 예매: ${ticketUrlFor(item.game)}`;
     lines.push(
       'BEGIN:VEVENT',
       `UID:${uid}`,

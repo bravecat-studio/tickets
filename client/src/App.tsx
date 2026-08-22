@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { GAMES_2026, TBD_HOME_SERIES, type Game } from './data/games';
+import { GAMES_2026, TBD_SEOUL_AWAY, type Game } from './data/games';
+import { HOSTS, SEOUL_HOST_SUMMARY, hostFor, isSeoulAway, ticketUrlFor } from './data/hosts';
 import { APP_STORES, OFFICIAL_LINKS } from './data/links';
-import { BOOKING_RULES, SALE_POLICIES, type SaleKind } from './data/policy';
-import { SEAT_GRADES, SEAT_TIPS } from './data/seats';
+import type { SaleKind } from './data/policy';
+import { HOST_SEATS, SEAT_TIPS } from './data/seats';
 import { downloadIcs, salesToIcs } from './lib/ics';
 import {
   formatKstDate,
@@ -16,6 +17,7 @@ import {
 import {
   STATUS_LABEL,
   bookingStatus,
+  bookableSales,
   nextSales,
   saleWindowsFor,
   type NextSale,
@@ -24,10 +26,10 @@ import { isSmsDue, reminderAt, smsEventKey, smsMessage, SMS_SCHEDULER } from './
 import { loadPrefs, savePrefs, type StoredPrefs } from './lib/storage';
 
 const CHECKLIST = [
-  { id: 'login', label: '티켓링크·타이거즈 앱 로그인 유지' },
-  { id: 'payco', label: 'PAYCO/간편결제 카드 등록' },
-  { id: 'seat', label: '좌석 1·2순위 결정' },
-  { id: 'qty', label: '예매 매수 확정 (일반 최대 8 / 선예매 2)' },
+  { id: 'login', label: '상대 구단 예매처(NOL·티켓링크) 로그인 유지' },
+  { id: 'pay', label: '간편결제 카드 등록' },
+  { id: 'seat', label: '원정 응원석 1·2순위 결정' },
+  { id: 'qty', label: '예매 매수 확정 (일반 최대 8)' },
   { id: 'time', label: '오픈 10분 전 페이지 대기' },
 ] as const;
 
@@ -45,10 +47,8 @@ function playCue() {
 }
 
 function openOfficial(game: Game) {
-  window.open(OFFICIAL_LINKS.ticketlinkKia, '_blank', 'noopener,noreferrer');
-  if (game.reserveUrl) {
-    window.open(game.reserveUrl, '_blank', 'noopener,noreferrer');
-  }
+  const url = ticketUrlFor(game);
+  if (url) window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 function pad(n: number): string {
@@ -75,16 +75,22 @@ export default function App() {
     persistTimer.current = window.setTimeout(() => savePrefs(prefs), 200);
   }, [prefs]);
 
-  const homeGames = useMemo(() => GAMES_2026.filter((g) => g.venue === 'home'), []);
+  const seoulGames = useMemo(() => GAMES_2026.filter(isSeoulAway), []);
   const upcoming = useMemo(() => nextSales(GAMES_2026, now, prefs.kinds), [now, prefs.kinds]);
+  const onSale = useMemo(() => bookableSales(GAMES_2026, now, prefs.kinds), [now, prefs.kinds]);
   const watchedUpcoming = useMemo(() => {
     if (prefs.watchIds.length === 0) return upcoming;
     return upcoming.filter((item) => prefs.watchIds.includes(item.game.id));
   }, [upcoming, prefs.watchIds]);
+  const watchedOnSale = useMemo(() => {
+    if (prefs.watchIds.length === 0) return onSale;
+    return onSale.filter((item) => prefs.watchIds.includes(item.game.id));
+  }, [onSale, prefs.watchIds]);
 
   const target: NextSale | null = useMemo(() => {
     if (practiceUntil) {
-      const game = homeGames.find((g) => g.id === '2026-08-28-ssg') ?? homeGames[0];
+      const game = seoulGames.find((g) => g.id === '2026-08-23-kiwoom') ?? seoulGames[0];
+      const host = hostFor(game);
       return {
         game,
         window: {
@@ -92,16 +98,21 @@ export default function App() {
           label: '연습 오픈',
           at: practiceUntil,
           maxTickets: 8,
-          channel: '티켓링크 (연습)',
+          channel: host ? `${host.vendor} (연습)` : '공식 예매처 (연습)',
         },
       };
     }
-    return watchedUpcoming[0] ?? upcoming[0] ?? null;
-  }, [practiceUntil, watchedUpcoming, upcoming, homeGames]);
+    return watchedUpcoming[0] ?? upcoming[0] ?? watchedOnSale[0] ?? onSale[0] ?? null;
+  }, [practiceUntil, watchedUpcoming, upcoming, watchedOnSale, onSale, seoulGames]);
 
+  const host = target ? hostFor(target.game) : HOSTS.kiwoom;
+  const activePolicies = host?.policies ?? HOSTS.kiwoom.policies;
   const remain = target ? msUntil(target.window.at, now) : 0;
   const parts = splitDuration(remain);
   const opened = Boolean(target && remain <= 0);
+  const ticketUrl = target ? ticketUrlFor(target.game) : HOSTS.kiwoom.ticketUrl;
+  const seats = HOST_SEATS[host?.id ?? 'kiwoom'];
+  const seatTips = SEAT_TIPS[host?.id ?? 'kiwoom'];
 
   useEffect(() => {
     if (!armed || !target || remain > 0) return;
@@ -111,8 +122,8 @@ export default function App() {
     setLog((prev) => [`${formatKstDateTime(new Date())} 오픈 · ${target.game.opponentShort} ${target.window.label}`, ...prev].slice(0, 6));
     playCue();
     if (prefs.notify && 'Notification' in window && Notification.permission === 'granted') {
-      new Notification(`KIA vs ${target.game.opponentShort} ${target.window.label} 오픈`, {
-        body: '공식 티켓링크에서 직접 예매하세요. 이 페이지는 예매를 대신하지 않습니다.',
+      new Notification(`서울 원정 vs ${target.game.opponentShort} ${target.window.label} 오픈`, {
+        body: '상대 구단 공식 예매처에서 직접 예매하세요. 이 페이지는 예매를 대신하지 않습니다.',
       });
     }
     if (prefs.autoOpen) openOfficial(target.game);
@@ -121,7 +132,7 @@ export default function App() {
   }, [armed, target, remain, prefs.notify, prefs.autoOpen]);
 
   const smsCandidates = prefs.watchIds.length ? watchedUpcoming : upcoming;
-  const nextSmsAt = target ? reminderAt(target.window.at) : null;
+  const nextSmsAt = target && remain > 0 ? reminderAt(target.window.at) : null;
   const smsRemain = nextSmsAt ? msUntil(nextSmsAt, now) : 0;
 
   useEffect(() => {
@@ -136,7 +147,7 @@ export default function App() {
         [`${formatKstDateTime(new Date())} 문자/알림 · ${item.game.opponentShort} ${item.window.label} 1시간 전`, ...prev].slice(0, 6)
       );
       if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(`KIA ${item.window.label} 1시간 전`, { body: smsMessage(item) });
+        new Notification(`서울 원정 ${item.window.label} 1시간 전`, { body: smsMessage(item) });
       }
     }
   }, [now, prefs.smsHourBefore, smsCandidates]);
@@ -177,7 +188,7 @@ export default function App() {
     playCue();
     setLog((prev) => [`${formatKstDateTime(new Date())} 1시간 전 알림 연습 · ${target.game.opponentShort}`, ...prev].slice(0, 6));
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('KIA 예매 오픈 1시간 전 (연습)', { body: smsMessage(target) });
+      new Notification('서울 원정 예매 오픈 1시간 전 (연습)', { body: smsMessage(target) });
     }
   }
 
@@ -187,9 +198,10 @@ export default function App() {
       <header className="top">
         <div>
           <p className="kicker">비상업 · 개인 구매 전용 GitHub Pages</p>
-          <h1>KIA 타이거즈 예매 일정 도우미</h1>
+          <h1>KIA 타이거즈 서울 원정 예매 도우미</h1>
           <p className="lede">
-            경기일 D-7 11:00 일반예매, D-8 10:00/10:30 선예매를 한국 시간으로 계산하고, 오픈 시각에 공식 티켓링크만 엽니다.
+            잠실(LG·두산)·고척(키움) 원정만 다룹니다. 상대 구단 예매 오픈 시각을 계산하고, 그 경우에만 알림을 보냅니다.
+            광주 홈경기와 서울 밖 원정은 일정·알람 대상이 아닙니다.
           </p>
         </div>
         <div className="clock" aria-live="polite">
@@ -200,7 +212,8 @@ export default function App() {
 
       <aside className="notice">
         <strong>이 사이트는 예매를 대신하지 않습니다.</strong>
-        좌석 점유·결제·매크로·암표 기능은 없습니다. 실제 구매는 티켓링크와 KIA 타이거즈 앱에서만 완료하세요. 일정은 우천·재편성으로 바뀔 수 있으며 구단 공지가 우선입니다.
+        좌석 점유·결제·매크로·암표 기능은 없습니다. 실제 구매는 상대 구단 공식 예매처(NOL 인터파크 또는 티켓링크)에서만
+        완료하세요. 일정은 우천·재편성으로 바뀔 수 있으며 홈 구단·KBO 공지가 우선입니다.
       </aside>
 
       <section className="hero">
@@ -208,17 +221,25 @@ export default function App() {
           <>
             <p className="hero__label">{opened ? '오픈됨' : '다음 오픈'}</p>
             <h2>
-              {target.window.label} · vs {target.game.opponentShort}
+              {target.window.label} · 서울 원정 vs {target.game.opponentShort}
             </h2>
             <p className="hero__meta">
               경기 {formatKstDate(target.game.date)} {target.game.startTime} · {target.game.stadium}
               <br />
               오픈 {formatKstDateTime(target.window.at)} · {target.window.channel} · 최대 {target.window.maxTickets}매
+              {host && (
+                <>
+                  <br />
+                  예매처 {host.vendor} · 원정 응원 {host.awayCheering}
+                </>
+              )}
               {nextSmsAt && (
                 <>
                   <br />
                   문자 알림 {formatKstDateTime(nextSmsAt)}
-                  {smsRemain > 0 ? ` · ${splitDuration(smsRemain).d}일 ${splitDuration(smsRemain).h}시간 ${splitDuration(smsRemain).m}분 후` : ' · 발송 구간'}
+                  {smsRemain > 0
+                    ? ` · ${splitDuration(smsRemain).d}일 ${splitDuration(smsRemain).h}시간 ${splitDuration(smsRemain).m}분 후`
+                    : ' · 발송 구간'}
                 </>
               )}
             </p>
@@ -236,33 +257,36 @@ export default function App() {
               ))}
             </div>
             <div className="hero__actions">
-              <a className="btn btn--primary" href={OFFICIAL_LINKS.ticketlinkKia} target="_blank" rel="noreferrer">
-                티켓링크 기아 예매
+              <a className="btn btn--primary" href={ticketUrl} target="_blank" rel="noreferrer">
+                {host ? `${host.vendor} 예매` : '공식 예매'}
               </a>
-              <a className="btn" href={OFFICIAL_LINKS.tigersReservation} target="_blank" rel="noreferrer">
-                구단 입장권 안내
-              </a>
+              {host && (
+                <a className="btn" href={host.clubTicketUrl} target="_blank" rel="noreferrer">
+                  {host.short} 구단 티켓 안내
+                </a>
+              )}
               <button
                 className="btn"
                 type="button"
-                onClick={() => downloadIcs('kia-tigers-sales.ics', salesToIcs(upcoming.slice(0, 12)))}
+                onClick={() => downloadIcs('kia-seoul-away-sales.ics', salesToIcs(upcoming.slice(0, 12)))}
               >
                 오픈 일정 ICS
               </button>
             </div>
           </>
         ) : (
-          <p>표시할 홈경기 오픈 일정이 없습니다. 잔여 재편성은 구단 공지를 확인하세요.</p>
+          <p>표시할 서울 원정 예매 일정이 없습니다. 우천 재편성은 홈 구단·KBO 공지를 확인하세요.</p>
         )}
       </section>
 
       <section className="panel">
         <h3>대기 모드</h3>
         <p className="hint">
-          오픈 시각이 되면 알림·효과음 후 공식 예매 탭을 엽니다. 티켓링크 로그인은 미리 해 두세요. 브라우저가 백그라운드면 팝업이 막힐 수 있습니다.
+          서울 원정 예매 오픈 시각이 되면 알림·효과음 후 상대 구단 공식 예매 탭을 엽니다. 예매처 로그인은 미리 해 두세요.
+          브라우저가 백그라운드면 팝업이 막힐 수 있습니다. 홈경기·서울 밖 원정에는 대기하지 않습니다.
         </p>
         <div className="chips">
-          {SALE_POLICIES.map((p) => (
+          {activePolicies.map((p) => (
             <label key={p.kind} className={prefs.kinds.includes(p.kind) ? 'chip chip--on' : 'chip'}>
               <input type="checkbox" checked={prefs.kinds.includes(p.kind)} onChange={() => toggleKind(p.kind)} />
               {p.label}
@@ -288,8 +312,8 @@ export default function App() {
           </label>
         </div>
         <div className="hero__actions">
-          <button className="btn btn--primary" type="button" onClick={arm} disabled={armed || !target}>
-            {armed ? '대기 중… 이 탭을 유지하세요' : '대기 모드 시작'}
+          <button className="btn btn--primary" type="button" onClick={arm} disabled={armed || !target || opened}>
+            {armed ? '대기 중… 이 탭을 유지하세요' : opened ? '이미 오픈됨' : '대기 모드 시작'}
           </button>
           <button className="btn" type="button" onClick={startPractice}>
             12초 연습
@@ -317,9 +341,9 @@ export default function App() {
       <section className="panel">
         <h3>오픈 1시간 전 문자 알림</h3>
         <p className="hint">
-          GitHub Actions가 매시 정각에 일정을 보고, 예매 오픈 1시간 전부터 오픈 직전 사이에 문자를 보냅니다. 이 탭이 열려
-          있으면 같은 시각에 브라우저 알림으로도 알려 드립니다. 전화번호는 저장소 Secrets에만 두고, 이 페이지에는 넣지
-          마세요.
+          GitHub Actions가 매시 정각에 일정을 보고, <strong>서울 원정 예매 오픈</strong> 1시간 전부터 오픈 직전 사이에만
+          문자를 보냅니다. 광주 홈경기와 창원 등 서울 밖 원정에는 보내지 않습니다. 이 탭이 열려 있으면 같은 시각에
+          브라우저 알림으로도 알려 드립니다. 전화번호는 저장소 Secrets에만 두고, 이 페이지에는 넣지 마세요.
         </p>
         <div className="scheduler-row">
           <span
@@ -328,7 +352,7 @@ export default function App() {
           >
             문자 스케줄러 {SMS_SCHEDULER.enabled ? 'ON' : 'OFF'}
           </span>
-          <span className="mini">매시 정각 · 오픈 1시간 전</span>
+          <span className="mini">매시 정각 · 서울 원정만 · 오픈 1시간 전</span>
         </div>
         <div className="toggles">
           <label>
@@ -342,7 +366,7 @@ export default function App() {
         </div>
         {nextSmsAt && target && (
           <p className="hero__meta">
-            다음 문자 예정: {formatKstDateTime(nextSmsAt)} ({target.window.label} · vs {target.game.opponentShort})
+            다음 문자 예정: {formatKstDateTime(nextSmsAt)} ({target.window.label} · 서울 원정 vs {target.game.opponentShort})
           </p>
         )}
         <ul className="rules">
@@ -356,8 +380,8 @@ export default function App() {
             <code>SOLAPI_SENDER</code> 또는 <code>SMS_WEBHOOK_URL</code>
           </li>
           <li>
-            대상 권종은 <code>sms.config.json</code>의 <code>kinds</code> (기본 일반예매). <code>watchIds</code>가 있으면 그
-            홈경기만 발송
+            대상은 서울 원정뿐이며, 권종은 <code>sms.config.json</code>의 <code>kinds</code> (기본 일반예매).{' '}
+            <code>watchIds</code>가 있으면 그 서울 원정만 발송
           </li>
           <li>
             스케줄 워크플로는 <code>main</code>에 머지된 뒤에만 매시 정각에 실행됩니다
@@ -372,32 +396,35 @@ export default function App() {
 
       <section>
         <div className="section-head">
-          <h3>홈경기 예매 일정</h3>
-          <p>관심 경기를 고르면 카운트다운 대상이 됩니다. 원정은 상대 구단 예매처를 이용하세요.</p>
+          <h3>서울 원정 예매 일정</h3>
+          <p>잠실·고척 원정만 표시합니다. 관심 경기를 고르면 카운트다운·알림 대상이 됩니다.</p>
         </div>
         <div className="games">
-          {GAMES_2026.filter((g) => kstDateTime(g.date, '23:59') >= now || g.venue === 'home').map((game) => {
-            const status = bookingStatus(game, now);
-            const windows = saleWindowsFor(game.date);
-            const watched = prefs.watchIds.includes(game.id);
-            return (
-              <article key={game.id} className={`game game--${status} ${watched ? 'game--watched' : ''}`}>
-                <div className="game__when">
-                  <strong>{formatKstDate(game.date)}</strong>
-                  <span>
-                    {game.startTime} · {game.venue === 'home' ? '홈' : '원정'}
-                  </span>
-                </div>
-                <div className="game__body">
-                  <h4>
-                    vs {game.opponent}
-                    <em>{STATUS_LABEL[status]}</em>
-                  </h4>
-                  <p>
-                    {game.stadium} · {game.series}
-                    {isWeekendPrice(game.date) ? ' · 주말 요금' : ' · 주중 요금'}
-                  </p>
-                  {game.venue === 'home' && (
+          {seoulGames
+            .filter((g) => kstDateTime(g.date, '23:59') >= now || bookingStatus(g, now) !== 'closed')
+            .map((game) => {
+              const status = bookingStatus(game, now);
+              const windows = saleWindowsFor(game);
+              const watched = prefs.watchIds.includes(game.id);
+              const gameHost = hostFor(game);
+              return (
+                <article key={game.id} className={`game game--${status} ${watched ? 'game--watched' : ''}`}>
+                  <div className="game__when">
+                    <strong>{formatKstDate(game.date)}</strong>
+                    <span>
+                      {game.startTime} · 서울 원정
+                    </span>
+                  </div>
+                  <div className="game__body">
+                    <h4>
+                      vs {game.opponent}
+                      <em>{STATUS_LABEL[status]}</em>
+                    </h4>
+                    <p>
+                      {game.stadium} · {game.series}
+                      {gameHost ? ` · ${gameHost.vendor}` : ''}
+                      {isWeekendPrice(game.date) ? ' · 주말 요금' : ' · 주중 요금'}
+                    </p>
                     <ul className="windows">
                       {windows.map((w) => (
                         <li key={w.kind}>
@@ -405,35 +432,33 @@ export default function App() {
                         </li>
                       ))}
                     </ul>
-                  )}
-                </div>
-                <div className="game__cta">
-                  {game.venue === 'home' ? (
-                    <>
-                      <button className={watched ? 'btn btn--tiny btn--on' : 'btn btn--tiny'} type="button" onClick={() => toggleWatch(game.id)}>
-                        {watched ? '관심 해제' : '관심'}
-                      </button>
-                      <a className="btn btn--tiny btn--primary" href={OFFICIAL_LINKS.ticketlinkKia} target="_blank" rel="noreferrer">
-                        공식 예매
-                      </a>
-                    </>
-                  ) : (
-                    <span className="mini">상대팀 예매처</span>
-                  )}
-                </div>
-              </article>
-            );
-          })}
+                  </div>
+                  <div className="game__cta">
+                    <button className={watched ? 'btn btn--tiny btn--on' : 'btn btn--tiny'} type="button" onClick={() => toggleWatch(game.id)}>
+                      {watched ? '관심 해제' : '관심'}
+                    </button>
+                    <a className="btn btn--tiny btn--primary" href={ticketUrlFor(game)} target="_blank" rel="noreferrer">
+                      공식 예매
+                    </a>
+                  </div>
+                </article>
+              );
+            })}
         </div>
       </section>
 
       <section className="panel">
-        <h3>9월 8일 이후 잔여 홈 시리즈 (일정 미정)</h3>
-        <p className="hint">정규 3연전은 9월 6일 KT전으로 끝나고, 이후는 우천·미편성 재편성입니다. 날짜가 나오면 구단·티켓링크를 확인하세요.</p>
+        <h3>이후 서울 원정 (일정 미정)</h3>
+        <p className="hint">
+          정규 서울 원정은 고척 키움 8/21–23 3연전으로 끝납니다. 우천·미편성 재편성이 잠실 또는 고척으로 나오면 그때만
+          예매 오픈과 알람을 다시 넣습니다.
+        </p>
         <ul className="tbd">
-          {TBD_HOME_SERIES.map((row) => (
+          {TBD_SEOUL_AWAY.map((row) => (
             <li key={row.opponent}>
-              <b>{row.opponent}</b>
+              <b>
+                {row.opponent} · {row.stadium}
+              </b>
               <span>{row.reason}</span>
             </li>
           ))}
@@ -442,7 +467,31 @@ export default function App() {
 
       <section className="grid-2">
         <div className="panel">
-          <h3>예매 정책</h3>
+          <h3>서울 원정 예매 정책</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>구장</th>
+                <th>상대</th>
+                <th>예매처</th>
+                <th>일반예매</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SEOUL_HOST_SUMMARY.map((row) => (
+                <tr key={row.id}>
+                  <td>{row.stadium}</td>
+                  <td>{row.name}</td>
+                  <td>
+                    <a href={row.ticketUrl} target="_blank" rel="noreferrer">
+                      {row.vendor}
+                    </a>
+                  </td>
+                  <td>{row.generalOpen}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
           <table>
             <thead>
               <tr>
@@ -453,7 +502,7 @@ export default function App() {
               </tr>
             </thead>
             <tbody>
-              {SALE_POLICIES.map((p) => (
+              {activePolicies.map((p) => (
                 <tr key={p.kind}>
                   <td>
                     {p.label}
@@ -469,7 +518,7 @@ export default function App() {
             </tbody>
           </table>
           <ul className="rules">
-            {BOOKING_RULES.map((rule) => (
+            {(host?.rules ?? HOSTS.kiwoom.rules).map((rule) => (
               <li key={rule}>{rule}</li>
             ))}
           </ul>
@@ -516,10 +565,10 @@ export default function App() {
       </section>
 
       <section className="panel">
-        <h3>2026 좌석·요금 참고</h3>
-        <p className="hint">{SEAT_TIPS.join(' ')}</p>
+        <h3>{host?.stadium ?? '고척스카이돔'} 좌석·요금 참고</h3>
+        <p className="hint">{seatTips.join(' ')}</p>
         <div className="seats">
-          {SEAT_GRADES.map((seat) => (
+          {seats.map((seat) => (
             <div key={seat.name} className="seat">
               <div>
                 <b>{seat.name}</b>
@@ -537,29 +586,30 @@ export default function App() {
       <section className="panel">
         <h3>공식 채널</h3>
         <div className="links">
-          <a href={OFFICIAL_LINKS.tigersReservation} target="_blank" rel="noreferrer">
-            구단 입장권
+          <a href={OFFICIAL_LINKS.kiwoomInterpark} target="_blank" rel="noreferrer">
+            키움 NOL 예매
+          </a>
+          <a href={OFFICIAL_LINKS.lgTicketlink} target="_blank" rel="noreferrer">
+            LG 티켓링크 예매
+          </a>
+          <a href={OFFICIAL_LINKS.interparkSports} target="_blank" rel="noreferrer">
+            NOL 스포츠
+          </a>
+          <a href={APP_STORES.interparkAndroid} target="_blank" rel="noreferrer">
+            NOL 앱 (Play)
           </a>
           <a href={APP_STORES.ticketlinkAndroid} target="_blank" rel="noreferrer">
             티켓링크 앱 (Play)
           </a>
-          <a href={OFFICIAL_LINKS.ticketlinkReservePlan} target="_blank" rel="noreferrer">
-            티켓링크 좌석 예매 (로그인)
-          </a>
           <a href={OFFICIAL_LINKS.tigersSchedule} target="_blank" rel="noreferrer">
-            구단 경기 일정
-          </a>
-          <a href={OFFICIAL_LINKS.ticketlinkLogin} target="_blank" rel="noreferrer">
-            티켓링크 로그인
-          </a>
-          <a href={OFFICIAL_LINKS.tigersFaq} target="_blank" rel="noreferrer">
-            구단 FAQ
+            KIA 경기 일정
           </a>
         </div>
       </section>
 
       <footer className="foot">
-        KIA 타이거즈·티켓링크와 무관한 개인용 일정 도우미입니다. 상표·일정·요금의 권리는 구단과 예매처에 있습니다.
+        KIA 타이거즈·키움·LG·두산·NOL·티켓링크와 무관한 개인용 서울 원정 일정 도우미입니다. 상표·일정·요금의 권리는
+        각 구단과 예매처에 있습니다.
       </footer>
     </div>
   );
