@@ -347,8 +347,9 @@ export default function App() {
         )}
         <ul className="rules">
           <li>
-            문자 스케줄러 on/off: <code>sms.config.json</code>의 <code>enabled</code> (이 사이트에 반영하려면{' '}
-            <code>main</code>에 머지). 커밋 없이 끄려면 저장소 Variables에 <code>SMS_REMINDER_ENABLED=false</code>
+            문자 스케줄러 on/off: GitHub Actions → <code>sms-reminder</code> → Run workflow에서 <code>scheduler</code>를{' '}
+            <code>on</code> 또는 <code>off</code>로 실행합니다. 커밋 없이 긴급히 끄려면 Variables에{' '}
+            <code>SMS_REMINDER_ENABLED=false</code>
           </li>
           <li>
             저장소 Secrets: <code>SMS_TO</code>, 그리고 <code>SOLAPI_API_KEY</code> / <code>SOLAPI_API_SECRET</code> /{' '}

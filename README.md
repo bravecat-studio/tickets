@@ -42,13 +42,17 @@ http://localhost:5173 을 엽니다. 선택 API(`npm run dev:server`)는 예전 
 
 ### 스케줄러 on/off
 
-문자 발송은 기본이 켜짐입니다. 끄려면 아래 중 하나를 사용합니다.
+문자 발송은 기본이 켜짐입니다. **GitHub Actions 워크플로에서 켜고 끕니다.**
 
-1. **저장소 설정 (커밋 필요):** `sms.config.json`의 `"enabled": false` 후 `main`에 머지
-2. **Variables (커밋 없음):** Settings → Secrets and variables → Actions → Variables에 `SMS_REMINDER_ENABLED=false`
-3. 다시 켜려면 `enabled: true`로 되돌리거나 변수를 `true`로 바꾸거나 삭제합니다.
+1. Actions → `sms-reminder` → **Run workflow**
+2. `scheduler`에서 `on`(켜기) 또는 `off`(끄기)를 고른 뒤 실행
+3. 기본값 `run`은 설정을 바꾸지 않고 지금 한 번만 검사/발송합니다
 
-수동 실행(Actions → `sms-reminder`)은 스케줄이 꺼져 있어도 `force` 입력으로 보낼 수 있습니다.
+이 선택은 `sms.config.json`의 `enabled`에 저장되어 이후 매시 정각 실행에 적용됩니다. 홈페이지의 ON/OFF 표시는 다음 Pages 배포 때 맞춰집니다.
+
+커밋 없이 긴급히 끄려면 Settings → Secrets and variables → Actions → Variables에 `SMS_REMINDER_ENABLED=false`를 넣습니다. 다시 켜려면 변수를 `true`로 바꾸거나 삭제합니다.
+
+수동 실행에서 `force`를 켜면 스케줄러가 꺼져 있어도 이번만 보낼 수 있습니다.
 
 ### 설정
 
