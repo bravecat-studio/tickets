@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * Sends a personal SMS 1 hour before a KIA home-game ticket sale.
- * Does not occupy seats or pay. Requires GitHub secrets or a webhook.
- * When no SMS channel delivers, the reminder is filed as a GitHub issue instead.
+ * Sends a personal SMS 1 hour before a KIA Seoul-away ticket sale (Jamsil / Gocheok).
+ * Home games and non-Seoul away games never produce a reminder. Does not occupy seats or pay.
+ * Requires GitHub secrets or a webhook. When no SMS channel delivers, the reminder
+ * is filed as a GitHub issue instead.
  */
 import { createHmac, randomBytes } from 'node:crypto';
 import { appendFileSync, readFileSync } from 'node:fs';
@@ -10,14 +11,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const TICKETLINK = 'https://www.ticketlink.co.kr/sports/137/58';
-const TICKETLINK_APP =
-  'https://play.google.com/store/apps/details?id=kr.co.ticketlink.cne&pcampaignid=web_share';
-const POLICIES = [
-  { kind: 'season', label: '선선예매', daysBefore: 8, clock: '10:00' },
-  { kind: 'early', label: '선예매', daysBefore: 8, clock: '10:30' },
-  { kind: 'general', label: '일반예매', daysBefore: 7, clock: '11:00' },
-];
+const HOSTS = loadHosts();
 const SOLAPI_BASE = 'https://api.solapi.com';
 const GITHUB_API = 'https://api.github.com';
 const SOLAPI_CONSOLE = 'https://console.solapi.com/api-keys';
@@ -25,6 +19,33 @@ export const ALERT_MARKER = 'sms-reminder:alert:solapi-access';
 
 function loadJson(rel) {
   return JSON.parse(readFileSync(join(ROOT, rel), 'utf8'));
+}
+
+function loadHosts() {
+  return JSON.parse(readFileSync(join(ROOT, 'client/src/data/hosts.json'), 'utf8'));
+}
+
+function isSeoulStadium(stadium) {
+  return stadium === '고척스카이돔' || stadium.includes('잠실') || stadium.includes('서울종합운동장');
+}
+
+export function hostIdFor(game) {
+  if (game.venue !== 'away') return null;
+  if (game.host && HOSTS[game.host]) return game.host;
+  if (game.stadium === '고척스카이돔' || game.opponentShort === '키움') return 'kiwoom';
+  if (!isSeoulStadium(game.stadium)) return null;
+  if (game.opponentShort === 'LG') return 'lg';
+  if (game.opponentShort === '두산') return 'doosan';
+  return null;
+}
+
+export function isSeoulAway(game) {
+  return hostIdFor(game) !== null;
+}
+
+function hostFor(game) {
+  const id = hostIdFor(game);
+  return id ? HOSTS[id] : null;
 }
 
 function isTruthy(value) {
@@ -45,10 +66,15 @@ function shiftKstDate(date, days) {
   }).format(new Date(noon.getTime() + days * 86_400_000));
 }
 
-function saleWindowsFor(gameDate) {
-  return POLICIES.map((policy) => ({
-    ...policy,
-    at: kstDateTime(shiftKstDate(gameDate, -policy.daysBefore), policy.clock),
+function saleWindowsFor(game) {
+  const host = hostFor(game);
+  if (!host) return [];
+  return host.policies.map((policy) => ({
+    kind: policy.kind,
+    label: policy.label,
+    at: kstDateTime(shiftKstDate(game.date, -policy.daysBefore), policy.openClock),
+    ticketUrl: game.reserveUrl || host.ticketUrl,
+    appUrl: host.appUrl,
   }));
 }
 
@@ -78,11 +104,11 @@ function formatOpen(at) {
 
 function buildMessage(item) {
   return [
-    `[KIA] ${item.label} 오픈 1시간 전`,
-    `vs ${item.game.opponentShort} ${item.game.date} ${item.game.startTime}`,
+    `[KIA] 서울 원정 ${item.label} 오픈 1시간 전`,
+    `vs ${item.game.opponentShort} ${item.game.date} ${item.game.startTime} ${item.game.stadium}`,
     `오픈 ${formatOpen(item.at)}`,
-    `공식 예매: ${TICKETLINK}`,
-    `앱: ${TICKETLINK_APP}`,
+    `공식 예매: ${item.ticketUrl}`,
+    `앱: ${item.appUrl}`,
   ].join('\n');
 }
 
@@ -93,9 +119,9 @@ export function dueSales(games, config, now) {
   const watch = new Set(config.watchIds ?? []);
   const items = [];
   for (const game of games) {
-    if (game.venue !== 'home') continue;
+    if (!isSeoulAway(game)) continue;
     if (watch.size > 0 && !watch.has(game.id)) continue;
-    for (const window of saleWindowsFor(game.date)) {
+    for (const window of saleWindowsFor(game)) {
       if (!kinds.has(window.kind)) continue;
       if (isSmsDue(window.at, now, leadMs, intervalMs)) {
         items.push({ game, ...window });
@@ -382,8 +408,8 @@ function reminderIssueBody(item, failures) {
     '',
     `- 경기: vs ${item.game.opponentShort} ${item.game.date} ${item.game.startTime}`,
     `- 오픈: ${formatOpen(item.at)} (${item.label})`,
-    `- 공식 예매: ${TICKETLINK}`,
-    `- 앱: ${TICKETLINK_APP}`,
+    `- 공식 예매: ${item.ticketUrl}`,
+    `- 앱: ${item.appUrl}`,
     '',
     '#### 문자 실패 원인',
     ...failureLines(failures),
@@ -578,18 +604,26 @@ export function runSelfTest() {
     leadMinutes: 60,
     cronIntervalMinutes: 60,
   };
-  const now = kstDateTime('2026-08-22', '10:05');
+  const now = kstDateTime('2026-08-16', '13:05');
   const due = dueSales(games, config, now);
-  if (due.length !== 1 || due[0].game.id !== '2026-08-29-ssg') {
+  if (due.length !== 1 || due[0].game.id !== '2026-08-23-kiwoom') {
     throw new Error(`self-test failed: ${JSON.stringify(due.map((d) => d.game.id))}`);
   }
-  const laterInHour = dueSales(games, config, kstDateTime('2026-08-22', '10:45'));
-  if (laterInHour.length !== 1 || laterInHour[0].game.id !== '2026-08-29-ssg') {
+  const laterInHour = dueSales(games, config, kstDateTime('2026-08-16', '13:45'));
+  if (laterInHour.length !== 1 || laterInHour[0].game.id !== '2026-08-23-kiwoom') {
     throw new Error('self-test failed: hourly window should still match at :45');
   }
-  const tooEarly = dueSales(games, config, kstDateTime('2026-08-22', '09:50'));
+  const tooEarly = dueSales(games, config, kstDateTime('2026-08-16', '12:50'));
   if (tooEarly.length !== 0) {
     throw new Error('self-test failed: expected no SMS before the 1-hour window');
+  }
+  const homeGameHour = dueSales(games, config, kstDateTime('2026-08-22', '10:05'));
+  if (homeGameHour.length !== 0) {
+    throw new Error('self-test failed: home games must not produce Seoul-away SMS');
+  }
+  const changwonHour = dueSales(games, config, kstDateTime('2026-08-25', '13:05'));
+  if (changwonHour.length !== 0) {
+    throw new Error('self-test failed: non-Seoul away games must not produce SMS');
   }
   if (isSchedulerEnabled({ enabled: false }, {}) !== false) {
     throw new Error('self-test failed: enabled=false should turn the scheduler off');

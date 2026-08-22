@@ -7,7 +7,8 @@
     "opponentShort": "키움",
     "venue": "away",
     "stadium": "고척스카이돔",
-    "series": "원정 3연전"
+    "series": "서울 원정 3연전",
+    "host": "kiwoom"
   },
   {
     "id": "2026-08-22-kiwoom",
@@ -17,7 +18,8 @@
     "opponentShort": "키움",
     "venue": "away",
     "stadium": "고척스카이돔",
-    "series": "원정 3연전"
+    "series": "서울 원정 3연전",
+    "host": "kiwoom"
   },
   {
     "id": "2026-08-23-kiwoom",
@@ -27,7 +29,8 @@
     "opponentShort": "키움",
     "venue": "away",
     "stadium": "고척스카이돔",
-    "series": "원정 3연전"
+    "series": "서울 원정 3연전",
+    "host": "kiwoom"
   },
   {
     "id": "2026-08-25-lotte",

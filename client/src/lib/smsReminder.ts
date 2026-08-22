@@ -1,5 +1,5 @@
 import type { NextSale } from './saleWindows';
-import { APP_STORES, OFFICIAL_LINKS } from '../data/links';
+import { ticketUrlFor } from '../data/hosts';
 import smsConfig from '@sms-config';
 
 export const SMS_LEAD_MS = 60 * 60 * 1000;
@@ -59,11 +59,11 @@ export function smsMessage(item: NextSale): string {
     minute: '2-digit',
     hour12: false,
   });
+  const ticket = ticketUrlFor(item.game);
   return [
-    `[KIA] ${item.window.label} 오픈 1시간 전`,
-    `vs ${item.game.opponentShort} ${item.game.date} ${item.game.startTime}`,
+    `[KIA] 서울 원정 ${item.window.label} 오픈 1시간 전`,
+    `vs ${item.game.opponentShort} ${item.game.date} ${item.game.startTime} ${item.game.stadium}`,
     `오픈 ${open}`,
-    `공식 예매: ${OFFICIAL_LINKS.ticketlinkKia}`,
-    `앱: ${APP_STORES.ticketlinkAndroid}`,
+    `공식 예매: ${ticket}`,
   ].join('\n');
 }

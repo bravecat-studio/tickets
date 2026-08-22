@@ -20,8 +20,8 @@ const DEFAULTS: StoredPrefs = {
   autoOpen: true,
   notify: true,
   smsHourBefore: true,
-  seatFirst: '응원특별석',
-  seatSecond: 'K8',
+  seatFirst: '버건디석',
+  seatSecond: '3층 지정석',
   qty: 2,
   checklist: {},
 };

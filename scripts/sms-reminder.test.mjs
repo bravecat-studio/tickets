@@ -114,7 +114,7 @@ async function main() {
     GITHUB_STEP_SUMMARY: summaryPath,
     SMS_RETRY_DELAY_MS: '0',
   };
-  const now = kst('2026-08-22', '10:29');
+  const now = kst('2026-08-16', '13:29');
 
   try {
     const logs = [];
@@ -157,7 +157,7 @@ async function main() {
       'a healthy probe should close the alert issue',
     );
 
-    const idle = await runReminder({ config: CONFIG, games: GAMES, now: kst('2026-08-22', '09:50'), env, log: () => {} });
+    const idle = await runReminder({ config: CONFIG, games: GAMES, now: kst('2026-08-16', '12:50'), env, log: () => {} });
     assert(idle.status === 'idle' && idle.due === 0, 'a run outside the window should stay idle');
 
     const noFallback = { ...CONFIG, issueFallback: false };
