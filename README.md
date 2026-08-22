@@ -27,9 +27,13 @@
 
 ## GitHub Pages
 
-1. 저장소 Settings → Pages → **GitHub Actions** 를 소스로 선택합니다.
-2. `main`에 푸시하거나 Actions에서 `github-pages` 워크플로를 실행합니다.
-3. 사이트는 `/tickets/` 경로로 빌드됩니다 (`BASE_PATH=/tickets/`).
+권장: 저장소 Settings → Pages → **GitHub Actions** 를 소스로 선택합니다. `main`에 푸시하거나 Actions에서 `github-pages` 워크플로를 실행하면 `/tickets/` 로 배포됩니다 (`BASE_PATH=/tickets/`).
+
+소스가 **Deploy from a branch** (`main` `/`) 로 남아 있으면 Jekyll이 README를 홈으로 렌더링합니다. 그 경우를 대비해 저장소 루트의 `index.html`·`assets/` 이 앱 빌드 결과입니다. 클라이언트 화면을 바꾸면 함께 갱신하세요:
+
+```bash
+npm run pages:sync
+```
 
 로컬 미리보기:
 
@@ -110,6 +114,7 @@ NOW=2026-08-16T13:05:00+09:00 DRY_RUN=1 npm run sms:reminder
 | `npm run dev:client` | Vite 개발 서버 (5173) |
 | `npm run test` | 예매 오픈 시각 단위 테스트 + 문자 발송·재시도·대체 알림 통합 테스트 |
 | `npm run build` | 서버+클라이언트 빌드 |
+| `npm run pages:sync` | Pages 브랜치 배포용으로 클라이언트 빌드를 저장소 루트에 복사 |
 | `npm run sms:reminder:dry` | 지금 시각 기준 문자 대상 로그 (미발송). 서울 원정이 아니면 대상 없음 |
 
 일정 데이터가 바뀌면 `client/src/data/games.json` 과 `client/src/data/hosts.json` 을 수정하세요.
