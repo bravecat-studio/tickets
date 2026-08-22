@@ -38,7 +38,23 @@ http://localhost:5173 을 엽니다. 선택 API(`npm run dev:server`)는 예전 
 
 ## 오픈 1시간 전 문자
 
-정적 GitHub Pages는 문자를 직접 보내지 못합니다. `sms-reminder` 워크플로가 10분마다 일정을 확인하고, 오픈 60–50분 전에 발송합니다.
+정적 GitHub Pages는 문자를 직접 보내지 못합니다. `sms-reminder` 워크플로가 **매시 정각**에 일정을 확인하고, 오픈 1시간 전부터 오픈 직전 사이에 발송합니다.
+
+### 스케줄러 on/off
+
+문자 발송은 기본이 켜짐입니다. **GitHub Actions 워크플로에서 켜고 끕니다.**
+
+1. Actions → `sms-reminder` → **Run workflow**
+2. `scheduler`에서 `on`(켜기) 또는 `off`(끄기)를 고른 뒤 실행
+3. 기본값 `run`은 설정을 바꾸지 않고 지금 한 번만 검사/발송합니다
+
+이 선택은 `sms.config.json`의 `enabled`에 저장되어 이후 매시 정각 실행에 적용됩니다. 홈페이지의 ON/OFF 표시는 다음 Pages 배포 때 맞춰집니다.
+
+커밋 없이 긴급히 끄려면 Settings → Secrets and variables → Actions → Variables에 `SMS_REMINDER_ENABLED=false`를 넣습니다. 다시 켜려면 변수를 `true`로 바꾸거나 삭제합니다.
+
+수동 실행에서 `force`를 켜면 스케줄러가 꺼져 있어도 이번만 보낼 수 있습니다.
+
+### 설정
 
 1. 저장소 Settings → Secrets에 다음을 넣습니다.
    - `SMS_TO`: 수신 번호 (예: `01012345678`)

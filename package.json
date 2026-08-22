@@ -13,7 +13,7 @@
     "dev:client": "npm run dev -w client",
     "build": "npm run build -w server && npm run build -w client",
     "typecheck": "npm run typecheck -w server && npm run typecheck -w client",
-    "test": "npm run test -w client && node scripts/sms-reminder.mjs --self-test",
+    "test": "npm run test -w client && node scripts/sms-reminder.mjs --self-test && node scripts/sms-scheduler-toggle.mjs --self-test",
     "sms:reminder": "node scripts/sms-reminder.mjs",
     "sms:reminder:dry": "DRY_RUN=1 node scripts/sms-reminder.mjs",
     "start": "npm run start -w server"

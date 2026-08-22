@@ -2,28 +2,86 @@ name: sms-reminder
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    # Hourly. GitHub cron is UTC; the due window is the 60 minutes before open.
+    - cron: '0 * * * *'
   workflow_dispatch:
     inputs:
+      scheduler:
+        description: '문자 스케줄러 — run 지금 실행 / on 켜기 / off 끄기'
+        type: choice
+        options:
+          - run
+          - on
+          - off
+        default: run
       dry_run:
-        description: 'Log the message without sending'
+        description: '문자를 보내지 않고 로그만'
+        type: boolean
+        default: false
+      force:
+        description: '스케줄러가 꺼져 있어도 이번만 발송'
         type: boolean
         default: false
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: sms-reminder
+  cancel-in-progress: false
 
 jobs:
-  remind:
+  toggle:
+    name: scheduler ${{ github.event.inputs.scheduler }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.scheduler == 'on' || github.event.inputs.scheduler == 'off') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Set SMS scheduler
+        env:
+          SCHEDULER_ACTION: ${{ github.event.inputs.scheduler }}
+        run: node scripts/sms-scheduler-toggle.mjs "$SCHEDULER_ACTION"
+      - name: Commit scheduler state
+        env:
+          SCHEDULER_ACTION: ${{ github.event.inputs.scheduler }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sms.config.json
+          if git diff --staged --quiet; then
+            echo "already ${SCHEDULER_ACTION}"
+            {
+              echo "### 문자 스케줄러 ${SCHEDULER_ACTION}"
+              echo "이미 같은 상태입니다. 이후 매시 정각 실행에 그대로 적용됩니다."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git commit -m "chore: SMS scheduler ${SCHEDULER_ACTION}"
+          git push
+          {
+            echo "### 문자 스케줄러 ${SCHEDULER_ACTION}"
+            echo "sms.config.json enabled 값을 저장했습니다. 이후 매시 정각 실행에 적용됩니다."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  remind:
+    name: send reminder
+    if: ${{ (github.event_name == 'schedule' && vars.SMS_REMINDER_ENABLED != 'false') || (github.event_name == 'workflow_dispatch' && github.event.inputs.scheduler == 'run') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Show scheduler status
+        run: node scripts/sms-scheduler-toggle.mjs --status
       - name: Send 1-hour SMS reminder
         env:
           DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+          FORCE: ${{ github.event.inputs.force == 'true' && '1' || '0' }}
+          SMS_REMINDER_ENABLED: ${{ vars.SMS_REMINDER_ENABLED }}
           SMS_TO: ${{ secrets.SMS_TO }}
           SMS_WEBHOOK_URL: ${{ secrets.SMS_WEBHOOK_URL }}
           SOLAPI_API_KEY: ${{ secrets.SOLAPI_API_KEY }}

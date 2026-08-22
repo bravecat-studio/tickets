@@ -1,14 +1,31 @@
 import type { NextSale } from './saleWindows';
 import { APP_STORES, OFFICIAL_LINKS } from '../data/links';
+import smsConfig from '@sms-config';
 
 export const SMS_LEAD_MS = 60 * 60 * 1000;
-export const SMS_CRON_INTERVAL_MS = 10 * 60 * 1000;
+export const SMS_CRON_INTERVAL_MS = 60 * 60 * 1000;
+
+export type SmsSchedulerConfig = {
+  enabled: boolean;
+  kinds: string[];
+  watchIds: string[];
+  leadMinutes: number;
+  cronIntervalMinutes: number;
+};
+
+export const SMS_SCHEDULER: SmsSchedulerConfig = {
+  enabled: smsConfig.enabled !== false,
+  kinds: smsConfig.kinds ?? ['general'],
+  watchIds: smsConfig.watchIds ?? [],
+  leadMinutes: smsConfig.leadMinutes ?? 60,
+  cronIntervalMinutes: smsConfig.cronIntervalMinutes ?? 60,
+};
 
 export function reminderAt(saleAt: Date, leadMs = SMS_LEAD_MS): Date {
   return new Date(saleAt.getTime() - leadMs);
 }
 
-/** True when `now` is inside the 10-minute cron slot that covers "1 hour before open". */
+/** True when `now` is inside the hourly cron slot that covers "1 hour before open". */
 export function isSmsDue(
   saleAt: Date,
   now: Date,
