@@ -9,10 +9,11 @@ on:
       scheduler:
         description: '문자 스케줄러 — run 지금 실행 / on 켜기 / off 끄기'
         type: choice
+        # Quote on/off — unquoted YAML 1.1 treats them as booleans (true/false).
         options:
           - run
-          - on
-          - off
+          - 'on'
+          - 'off'
         default: run
       dry_run:
         description: '문자를 보내지 않고 로그만'
@@ -33,7 +34,7 @@ concurrency:
 jobs:
   toggle:
     name: scheduler ${{ github.event.inputs.scheduler }}
-    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.scheduler == 'on' || github.event.inputs.scheduler == 'off') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.scheduler == 'on' || github.event.inputs.scheduler == 'off' || github.event.inputs.scheduler == 'true' || github.event.inputs.scheduler == 'false') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
