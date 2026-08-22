@@ -1,6 +1,8 @@
 {
   "enabled": true,
-  "kinds": ["general"],
+  "kinds": [
+    "general"
+  ],
   "watchIds": [],
   "leadMinutes": 60,
   "cronIntervalMinutes": 60
