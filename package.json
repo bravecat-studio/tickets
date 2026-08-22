@@ -16,6 +16,7 @@
     "test": "npm run test -w client && node scripts/sms-reminder.mjs --self-test && node scripts/sms-reminder.test.mjs && node scripts/sms-scheduler-toggle.mjs --self-test",
     "sms:reminder": "node scripts/sms-reminder.mjs",
     "sms:reminder:dry": "DRY_RUN=1 node scripts/sms-reminder.mjs",
+    "pages:sync": "BASE_PATH=/tickets/ npm run build -w client && node scripts/sync-pages-fallback.mjs",
     "start": "npm run start -w server"
   }
 }
