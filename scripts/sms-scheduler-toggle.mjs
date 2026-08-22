@@ -10,11 +10,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG_PATH = join(ROOT, 'sms.config.json');
 
+export function normalizeSchedulerAction(action) {
+  if (action === 'on' || action === 'true') return 'on';
+  if (action === 'off' || action === 'false') return 'off';
+  throw new Error(`invalid scheduler action: ${action}`);
+}
+
 export function applySchedulerState(config, action) {
-  if (action !== 'on' && action !== 'off') {
-    throw new Error(`invalid scheduler action: ${action}`);
-  }
-  return { ...config, enabled: action === 'on' };
+  const normalized = normalizeSchedulerAction(action);
+  return { ...config, enabled: normalized === 'on' };
 }
 
 export function formatConfig(config) {
@@ -34,6 +38,12 @@ export function runSelfTest() {
   if (on.enabled !== true) {
     throw new Error('self-test failed: on should set enabled=true');
   }
+  if (applySchedulerState(on, 'false').enabled !== false) {
+    throw new Error('self-test failed: false should alias to off');
+  }
+  if (applySchedulerState(off, 'true').enabled !== true) {
+    throw new Error('self-test failed: true should alias to on');
+  }
   let threw = false;
   try {
     applySchedulerState({}, 'run');
@@ -42,6 +52,13 @@ export function runSelfTest() {
   }
   if (!threw) {
     throw new Error('self-test failed: expected invalid action to throw');
+  }
+  const workflow = readFileSync(join(ROOT, '.github/workflows/sms-reminder.yml'), 'utf8');
+  if (!workflow.includes("- 'on'") && !workflow.includes('- "on"')) {
+    throw new Error('self-test failed: sms-reminder.yml must quote on/off so YAML does not coerce them to booleans');
+  }
+  if (!workflow.includes("- 'off'") && !workflow.includes('- "off"')) {
+    throw new Error('self-test failed: sms-reminder.yml must quote on/off so YAML does not coerce them to booleans');
   }
   console.log('sms-scheduler-toggle self-test ok');
 }
@@ -61,8 +78,9 @@ function main() {
   const config = loadConfig();
   const next = applySchedulerState(config, action);
   writeFileSync(CONFIG_PATH, formatConfig(next));
+  const normalized = normalizeSchedulerAction(action);
   const changed = config.enabled !== next.enabled;
-  console.log(`SMS scheduler ${action} (enabled=${next.enabled}${changed ? '' : ', unchanged'})`);
+  console.log(`SMS scheduler ${normalized} (enabled=${next.enabled}${changed ? '' : ', unchanged'})`);
 }
 
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
