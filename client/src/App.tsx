@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { GAMES_2026, TBD_SEOUL_AWAY, type Game } from './data/games';
+import { GAMES_2026, SCHEDULE_META, TBD_SEOUL_AWAY, type Game } from './data/games';
 import { HOSTS, SEOUL_HOST_SUMMARY, hostFor, isSeoulAway, ticketUrlFor } from './data/hosts';
 import { APP_STORES, OFFICIAL_LINKS } from './data/links';
 import type { SaleKind } from './data/policy';
@@ -447,23 +447,25 @@ export default function App() {
         </div>
       </section>
 
-      <section className="panel">
-        <h3>이후 서울 원정 (일정 미정)</h3>
-        <p className="hint">
-          정규 서울 원정은 고척 키움 8/21–23 3연전으로 끝납니다. 우천·미편성 재편성이 잠실 또는 고척으로 나오면 그때만
-          예매 오픈과 알람을 다시 넣습니다.
-        </p>
-        <ul className="tbd">
-          {TBD_SEOUL_AWAY.map((row) => (
-            <li key={row.opponent}>
-              <b>
-                {row.opponent} · {row.stadium}
-              </b>
-              <span>{row.reason}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {TBD_SEOUL_AWAY.length > 0 && (
+        <section className="panel">
+          <h3>이후 서울 원정 (일정 미정)</h3>
+          <p className="hint">
+            잔여 잠실·고척 원정이 아직 없으면 아래에 둡니다. 우천 재편성이 나오면 GitHub Actions가 네이버 스포츠 KBO
+            일정을 가져와 예매 오픈과 알람을 다시 넣습니다.
+          </p>
+          <ul className="tbd">
+            {TBD_SEOUL_AWAY.map((row) => (
+              <li key={row.opponent}>
+                <b>
+                  {row.opponent} · {row.stadium}
+                </b>
+                <span>{row.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="grid-2">
         <div className="panel">
@@ -609,7 +611,8 @@ export default function App() {
 
       <footer className="foot">
         KIA 타이거즈·키움·LG·두산·NOL·티켓링크와 무관한 개인용 서울 원정 일정 도우미입니다. 상표·일정·요금의 권리는
-        각 구단과 예매처에 있습니다.
+        각 구단과 예매처에 있습니다. 잔여 일정은 {SCHEDULE_META.sourceLabel} 기준으로{' '}
+        {formatKstDateTime(new Date(SCHEDULE_META.updatedAt))}에 자동 갱신했습니다.
       </footer>
     </div>
   );

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "2026-08-22-kiwoom",
+    "date": "2026-08-22",
+    "startTime": "18:00",
+    "opponent": "키움 히어로즈",
+    "opponentShort": "키움",
+    "venue": "away",
+    "stadium": "고척스카이돔",
+    "series": "서울 원정 3연전",
+    "host": "kiwoom"
+  },
+  {
+    "id": "2026-08-23-kiwoom",
+    "date": "2026-08-23",
+    "startTime": "14:00",
+    "opponent": "키움 히어로즈",
+    "opponentShort": "키움",
+    "venue": "away",
+    "stadium": "고척스카이돔",
+    "series": "서울 원정 3연전",
+    "host": "kiwoom"
+  },
+  {
+    "id": "2026-08-28-ssg",
+    "date": "2026-08-28",
+    "startTime": "18:30",
+    "opponent": "SSG 랜더스",
+    "opponentShort": "SSG",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈 3연전"
+  },
+  {
+    "id": "2026-09-01-nc",
+    "date": "2026-09-01",
+    "startTime": "18:30",
+    "opponent": "NC 다이노스",
+    "opponentShort": "NC",
+    "venue": "away",
+    "stadium": "창원NC파크",
+    "series": "원정 3연전"
+  }
+]

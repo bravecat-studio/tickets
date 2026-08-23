@@ -1,0 +1,95 @@
+name: update-schedule
+
+on:
+  schedule:
+    # 10:20 and 22:20 KST. GitHub cron is UTC.
+    - cron: '20 1,13 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '커밋하지 않고 로그만'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update-schedule
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: sync remaining games
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Fetch KBO schedule
+        run: node scripts/sync-games.test.mjs && node scripts/sync-games.mjs
+      - name: Commit schedule
+        id: commit
+        env:
+          DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add client/src/data/games.json client/src/data/tbd.json client/src/data/schedule-meta.json
+          if git diff --staged --quiet; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            echo '일정 변경 없음' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo '### 잔여 경기 일정 갱신'
+            echo
+            git diff --staged --stat
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$DRY_RUN" = '1' ]; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            echo 'dry-run: 커밋하지 않습니다.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          npm ci
+          npm run pages:sync
+          git add index.html 404.html favicon.svg .nojekyll assets
+          git commit -m "chore: sync remaining KIA schedule"
+          git push
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: deploy pages
+    needs: sync
+    if: github.ref == 'refs/heads/main' && needs.sync.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck -w client
+      - run: npm run build -w client
+        env:
+          BASE_PATH: /tickets/
+      - run: cp client/dist/index.html client/dist/404.html
+      - run: node scripts/sync-pages-fallback.mjs --check
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: client/dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -13,9 +13,11 @@
     "dev:client": "npm run dev -w client",
     "build": "npm run build -w server && npm run build -w client",
     "typecheck": "npm run typecheck -w server && npm run typecheck -w client",
-    "test": "npm run test -w client && node scripts/sms-reminder.mjs --self-test && node scripts/sms-reminder.test.mjs && node scripts/sms-scheduler-toggle.mjs --self-test",
+    "test": "npm run test -w client && node scripts/sms-reminder.mjs --self-test && node scripts/sms-reminder.test.mjs && node scripts/sms-scheduler-toggle.mjs --self-test && node scripts/sync-games.test.mjs",
     "sms:reminder": "node scripts/sms-reminder.mjs",
     "sms:reminder:dry": "DRY_RUN=1 node scripts/sms-reminder.mjs",
+    "schedule:sync": "node scripts/sync-games.mjs",
+    "schedule:sync:dry": "DRY_RUN=1 node scripts/sync-games.mjs",
     "pages:sync": "BASE_PATH=/tickets/ npm run build -w client && node scripts/sync-pages-fallback.mjs",
     "start": "npm run start -w server"
   }

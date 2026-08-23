@@ -13,7 +13,7 @@ import { ALERT_MARKER, runReminder } from './sms-reminder.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BLOCKED_IP = '20.118.29.116';
-const GAMES = JSON.parse(readFileSync(join(ROOT, 'client/src/data/games.json'), 'utf8'));
+const GAMES = JSON.parse(readFileSync(join(ROOT, 'client/src/data/games.fixture.json'), 'utf8'));
 const CONFIG = { enabled: true, kinds: ['general'], leadMinutes: 60, cronIntervalMinutes: 60 };
 
 function kst(date, hhmm) {

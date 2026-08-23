@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { GAMES_2026 } from '../data/games';
+import type { Game } from '../data/games';
+import fixtureGames from '../data/games.fixture.json';
 import { HOSTS } from '../data/hosts';
 import { kstDateTime } from './kst';
 import { nextSales } from './saleWindows';
 import { dueSmsSales, isSmsDue, reminderAt, SMS_SCHEDULER, smsMessage } from './smsReminder';
+
+const GAMES = fixtureGames as Game[];
 
 describe('sms reminder timing', () => {
   const open = kstDateTime('2026-08-16', '14:00');
@@ -22,7 +25,7 @@ describe('sms reminder timing', () => {
   });
 
   it('selects the Gocheok 8/23 general sale at 13:05 on 8/16', () => {
-    const sales = nextSales(GAMES_2026, kstDateTime('2026-08-16', '13:00'), ['general']);
+    const sales = nextSales(GAMES, kstDateTime('2026-08-16', '13:00'), ['general']);
     const due = dueSmsSales(sales, kstDateTime('2026-08-16', '13:05'));
     expect(due).toHaveLength(1);
     expect(due[0].game.id).toBe('2026-08-23-kiwoom');
@@ -34,7 +37,7 @@ describe('sms reminder timing', () => {
   });
 
   it('does not select Gwangju home sales even in their 1-hour window', () => {
-    const sales = nextSales(GAMES_2026, kstDateTime('2026-08-22', '10:00'), ['general']);
+    const sales = nextSales(GAMES, kstDateTime('2026-08-22', '10:00'), ['general']);
     const due = dueSmsSales(sales, kstDateTime('2026-08-22', '10:05'));
     expect(sales.some((item) => item.game.id.includes('ssg'))).toBe(false);
     expect(due).toHaveLength(0);

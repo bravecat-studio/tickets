@@ -596,7 +596,7 @@ function assert(condition, message) {
 }
 
 export function runSelfTest() {
-  const games = loadJson('client/src/data/games.json');
+  const games = loadJson('client/src/data/games.fixture.json');
   const config = {
     enabled: true,
     kinds: ['general'],
