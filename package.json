@@ -18,6 +18,7 @@
     "sms:reminder:dry": "DRY_RUN=1 node scripts/sms-reminder.mjs",
     "schedule:sync": "node scripts/sync-games.mjs",
     "schedule:sync:dry": "DRY_RUN=1 node scripts/sync-games.mjs",
+    "pages:sync": "BASE_PATH=/tickets/ npm run build -w client && node scripts/sync-pages-fallback.mjs",
     "start": "npm run start -w server"
   }
 }

@@ -31,6 +31,8 @@ jobs:
         env:
           BASE_PATH: /tickets/
       - run: cp client/dist/index.html client/dist/404.html
+      # Branch-source Pages publishes README unless the built SPA is at repo root.
+      - run: node scripts/sync-pages-fallback.mjs --check
       - uses: actions/upload-pages-artifact@v3
         with:
           path: client/dist
