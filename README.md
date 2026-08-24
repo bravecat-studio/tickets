@@ -30,7 +30,7 @@
 
 권장: 저장소 Settings → Pages → **GitHub Actions** 를 소스로 선택합니다. `main`에 푸시하거나 Actions에서 `github-pages` 워크플로를 실행하면 `/tickets/` 로 배포됩니다 (`BASE_PATH=/tickets/`).
 
-소스가 **Deploy from a branch** (`main` `/`) 로 남아 있으면 Jekyll이 README를 홈으로 렌더링합니다. 그 경우를 대비해 저장소 루트의 `index.html`·`assets/` 이 앱 빌드 결과입니다. 클라이언트 화면을 바꾸면 함께 갱신하세요:
+소스가 **Deploy from a branch** (`main` `/`) 로 남아 있으면 Jekyll이 README를 홈으로 렌더링합니다. 그 경우를 대비해 저장소 루트의 `index.html`·`assets/` 이 앱 빌드 결과입니다. `main`에 푸시하면 `github-pages`가 어긋난 폴백을 자동으로 맞춥니다. 로컬에서 미리 맞추려면:
 
 ```bash
 npm run pages:sync
@@ -57,7 +57,7 @@ http://localhost:5173 을 엽니다. 선택 API(`npm run dev:server`)는 예전 
 2. `scheduler`에서 `on`(켜기) 또는 `off`(끄기)를 고른 뒤 실행
 3. 기본값 `run`은 설정을 바꾸지 않고 지금 한 번만 검사/발송합니다
 
-이 선택은 `sms.config.json`의 `enabled`에 저장되어 이후 매시 정각 실행에 적용됩니다. 홈페이지의 ON/OFF 표시는 다음 Pages 배포 때 맞춰집니다.
+이 선택은 `sms.config.json`의 `enabled`에 저장되어 이후 매시 정각 실행에 적용됩니다. 같은 실행에서 홈페이지 ON/OFF 표시(Pages 폴백)도 함께 맞춥니다.
 
 잔여 **서울 원정**이 없으면 `sms-reminder`와 `update-schedule`이 스케줄러를 자동으로 끕니다. 우천 재편성으로 서울 원정이 다시 생기면 자동으로 켜집니다. Actions에서 수동으로 끈 경우에는 경기가 돌아와도 자동으로 켜지지 않습니다.
 
