@@ -1,16 +1,5 @@
 [
   {
-    "id": "2026-08-23-kiwoom",
-    "date": "2026-08-23",
-    "startTime": "14:00",
-    "opponent": "키움 히어로즈",
-    "opponentShort": "키움",
-    "venue": "away",
-    "stadium": "고척스카이돔",
-    "series": "서울 원정 3연전",
-    "host": "kiwoom"
-  },
-  {
     "id": "2026-08-25-lotte",
     "date": "2026-08-25",
     "startTime": "18:30",
