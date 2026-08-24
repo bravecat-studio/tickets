@@ -372,7 +372,8 @@ export default function App() {
         <ul className="rules">
           <li>
             문자 스케줄러 on/off: GitHub Actions → <code>sms-reminder</code> → Run workflow에서 <code>scheduler</code>를{' '}
-            <code>on</code> 또는 <code>off</code>로 실행합니다. 커밋 없이 긴급히 끄려면 Variables에{' '}
+            <code>on</code> 또는 <code>off</code>로 실행합니다. 잔여 서울 원정이 없으면 자동으로 꺼지고, 재편성으로 다시
+            생기면 자동으로 켜집니다(수동으로 끈 경우는 그대로 꺼짐). 커밋 없이 긴급히 끄려면 Variables에{' '}
             <code>SMS_REMINDER_ENABLED=false</code>
           </li>
           <li>

@@ -34,6 +34,11 @@ jobs:
           cache: npm
       - name: Fetch KBO schedule
         run: node scripts/sync-games.test.mjs && node scripts/sync-games.mjs
+      - name: Reconcile SMS scheduler with remaining games
+        id: scheduler
+        env:
+          DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+        run: node scripts/sms-scheduler-toggle.mjs --auto-remaining
       - name: Commit schedule
         id: commit
         env:
@@ -63,6 +68,18 @@ jobs:
           git commit -m "chore: sync remaining KIA schedule"
           git push
           echo 'changed=true' >> "$GITHUB_OUTPUT"
+      - name: Commit SMS scheduler auto state
+        if: ${{ steps.scheduler.outputs.changed == 'true' }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sms.config.json
+          git commit -m "chore: SMS scheduler ${{ steps.scheduler.outputs.action }}"
+          git push
+          {
+            echo "### 문자 스케줄러 ${{ steps.scheduler.outputs.action }}"
+            echo "잔여 서울 원정 ${{ steps.scheduler.outputs.remaining }}경기 기준으로 스케줄러를 맞췄습니다."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
     name: deploy pages

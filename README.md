@@ -59,6 +59,8 @@ http://localhost:5173 을 엽니다. 선택 API(`npm run dev:server`)는 예전 
 
 이 선택은 `sms.config.json`의 `enabled`에 저장되어 이후 매시 정각 실행에 적용됩니다. 홈페이지의 ON/OFF 표시는 다음 Pages 배포 때 맞춰집니다.
 
+잔여 **서울 원정**이 없으면 `sms-reminder`와 `update-schedule`이 스케줄러를 자동으로 끕니다. 우천 재편성으로 서울 원정이 다시 생기면 자동으로 켜집니다. Actions에서 수동으로 끈 경우에는 경기가 돌아와도 자동으로 켜지지 않습니다.
+
 커밋 없이 긴급히 끄려면 Settings → Secrets and variables → Actions → Variables에 `SMS_REMINDER_ENABLED=false`를 넣습니다. 다시 켜려면 변수를 `true`로 바꾸거나 삭제합니다.
 
 수동 실행에서 `force`를 켜면 스케줄러가 꺼져 있어도 이번만 보낼 수 있습니다.

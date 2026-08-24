@@ -56,14 +56,23 @@ function kstDateTime(date, hhmm) {
   return new Date(`${date}T${hhmm}:00+09:00`);
 }
 
-function shiftKstDate(date, days) {
-  const noon = kstDateTime(date, '12:00');
+export function kstYmd(now = new Date()) {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Seoul',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).format(new Date(noon.getTime() + days * 86_400_000));
+  }).format(now);
+}
+
+function shiftKstDate(date, days) {
+  const noon = kstDateTime(date, '12:00');
+  return kstYmd(new Date(noon.getTime() + days * 86_400_000));
+}
+
+/** Remaining Seoul-away games (today or later). Home / non-Seoul away never count. */
+export function remainingSeoulAway(games, today) {
+  return games.filter((game) => game.date >= today && isSeoulAway(game));
 }
 
 function saleWindowsFor(game) {
@@ -418,7 +427,7 @@ function reminderIssueBody(item, failures) {
 
 /**
  * One reminder pass. Returns the outcome instead of exiting so the self-test can drive it.
- * status: off | idle | dry-run | sent | fallback | failed
+ * status: off | no-remaining | idle | dry-run | sent | fallback | failed
  */
 export async function runReminder({ config, games, now, env, log = console.log }) {
   const dryRun = isTruthy(env.DRY_RUN);
@@ -429,6 +438,14 @@ export async function runReminder({ config, games, now, env, log = console.log }
   if (!enabled && !dryRun) {
     log('SMS scheduler off (sms.config.json enabled=false or SMS_REMINDER_ENABLED=false); skip');
     return { ...result, status: 'off' };
+  }
+
+  const remaining = remainingSeoulAway(games, kstYmd(now));
+  if (remaining.length === 0) {
+    log('no remaining Seoul-away games; skip SMS scheduler');
+    summary.push('잔여 서울 원정 없음 — 문자 스케줄러를 중단합니다.');
+    writeSummary(env, summary);
+    return { ...result, status: 'no-remaining' };
   }
 
   const due = dueSales(games, config, now);
@@ -634,6 +651,18 @@ export function runSelfTest() {
   if (isSchedulerEnabled({ enabled: false }, { FORCE: '1' }) !== true) {
     throw new Error('self-test failed: FORCE=1 should override a disabled scheduler');
   }
+  if (remainingSeoulAway(games, '2026-08-16').map((game) => game.id).join(',') !== '2026-08-22-kiwoom,2026-08-23-kiwoom') {
+    throw new Error('self-test failed: remaining Seoul-away should keep both Gocheok games on 8/16');
+  }
+  if (remainingSeoulAway(games, '2026-08-23').map((game) => game.id).join(',') !== '2026-08-23-kiwoom') {
+    throw new Error('self-test failed: remaining Seoul-away should drop games before today');
+  }
+  if (remainingSeoulAway(games, '2026-08-24').length !== 0) {
+    throw new Error('self-test failed: remaining Seoul-away should be empty after the last Gocheok game');
+  }
+  if (remainingSeoulAway(games, '2026-08-16').some((game) => game.venue === 'home' || game.stadium.includes('창원'))) {
+    throw new Error('self-test failed: home and non-Seoul away games must not count as remaining SMS targets');
+  }
 
   const ipBlock = classifySolapiError(
     403,
@@ -663,6 +692,7 @@ export function runSelfTest() {
   const workflow = readFileSync(join(ROOT, '.github/workflows/sms-reminder.yml'), 'utf8');
   assert(/issues:\s*write/.test(workflow), 'sms-reminder.yml must grant issues: write for the fallback');
   assert(workflow.includes('GITHUB_TOKEN'), 'sms-reminder.yml must pass GITHUB_TOKEN to the reminder step');
+  assert(workflow.includes('--auto-remaining'), 'sms-reminder.yml must auto-stop the scheduler when no Seoul-away games remain');
 
   console.log('sms-reminder self-test ok');
 }

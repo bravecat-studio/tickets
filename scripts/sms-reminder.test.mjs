@@ -160,6 +160,17 @@ async function main() {
     const idle = await runReminder({ config: CONFIG, games: GAMES, now: kst('2026-08-16', '12:50'), env, log: () => {} });
     assert(idle.status === 'idle' && idle.due === 0, 'a run outside the window should stay idle');
 
+    const probesBeforeEmpty = state.probes;
+    const empty = await runReminder({
+      config: CONFIG,
+      games: GAMES.filter((game) => !game.host),
+      now,
+      env,
+      log: () => {},
+    });
+    assert(empty.status === 'no-remaining' && empty.due === 0, 'no remaining Seoul-away games should stop the scheduler');
+    assert(state.probes === probesBeforeEmpty, 'no remaining Seoul-away games must not probe Solapi');
+
     const noFallback = { ...CONFIG, issueFallback: false };
     state.solapiBlocked = true;
     const bare = await runReminder({ config: noFallback, games: GAMES, now, env, log: () => {} });

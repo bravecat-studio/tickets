@@ -7,6 +7,8 @@ declare module '@sms-config' {
     watchIds: string[];
     leadMinutes: number;
     cronIntervalMinutes?: number;
+    autoDisabled?: boolean;
+    issueFallback?: boolean;
   };
   export default value;
 }
