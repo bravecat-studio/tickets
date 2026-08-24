@@ -147,9 +147,20 @@ export function runSelfTest() {
   if (!workflow.includes('--auto-remaining')) {
     throw new Error('self-test failed: sms-reminder.yml must auto-stop the scheduler when no Seoul-away games remain');
   }
+  if (!workflow.includes('npm run pages:sync')) {
+    throw new Error('self-test failed: sms-reminder.yml must pages:sync when the scheduler state is committed');
+  }
   const scheduleWorkflow = readFileSync(join(ROOT, '.github/workflows/update-schedule.yml'), 'utf8');
   if (!scheduleWorkflow.includes('--auto-remaining')) {
     throw new Error('self-test failed: update-schedule.yml must auto-stop the scheduler when no Seoul-away games remain');
+  }
+  const autoCommit = scheduleWorkflow.split('Commit SMS scheduler auto state')[1] ?? '';
+  if (!autoCommit.includes('npm run pages:sync')) {
+    throw new Error('self-test failed: update-schedule.yml must pages:sync when auto-stopping the scheduler');
+  }
+  const pagesWorkflow = readFileSync(join(ROOT, '.github/workflows/pages.yml'), 'utf8');
+  if (!pagesWorkflow.includes('Commit Pages fallback if drifted')) {
+    throw new Error('self-test failed: github-pages must commit a drifted Pages fallback instead of failing the deploy');
   }
   console.log('sms-scheduler-toggle self-test ok');
 }

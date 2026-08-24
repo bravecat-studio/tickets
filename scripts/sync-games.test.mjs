@@ -69,6 +69,8 @@ async function main() {
   assert(workflow.includes('node scripts/sync-games.mjs'), 'workflow must run the sync script');
   assert(workflow.includes('client/src/data/games.json'), 'workflow must commit games.json');
   assert(workflow.includes('--auto-remaining'), 'workflow must auto-stop the SMS scheduler when no Seoul-away games remain');
+  const autoCommit = workflow.split('Commit SMS scheduler auto state')[1] ?? '';
+  assert(autoCommit.includes('npm run pages:sync'), 'workflow must pages:sync when auto-stopping the SMS scheduler');
   assert(workflow.includes('actions/deploy-pages@v4'), 'workflow must deploy Pages after a schedule change');
 
   console.log('sync-games integration test ok');

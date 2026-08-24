@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -32,6 +32,18 @@ jobs:
           BASE_PATH: /tickets/
       - run: cp client/dist/index.html client/dist/404.html
       # Branch-source Pages publishes README unless the built SPA is at repo root.
+      - run: node scripts/sync-pages-fallback.mjs
+      - name: Commit Pages fallback if drifted
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html 404.html favicon.svg .nojekyll assets
+          if git diff --staged --quiet; then
+            echo 'Pages fallback already current'
+            exit 0
+          fi
+          git commit -m "chore: sync GitHub Pages fallback"
+          git push
       - run: node scripts/sync-pages-fallback.mjs --check
       - uses: actions/upload-pages-artifact@v3
         with:

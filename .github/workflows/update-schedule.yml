@@ -73,12 +73,14 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add sms.config.json
+          npm ci
+          npm run pages:sync
+          git add sms.config.json index.html 404.html favicon.svg .nojekyll assets
           git commit -m "chore: SMS scheduler ${{ steps.scheduler.outputs.action }}"
           git push
           {
             echo "### 문자 스케줄러 ${{ steps.scheduler.outputs.action }}"
-            echo "잔여 서울 원정 ${{ steps.scheduler.outputs.remaining }}경기 기준으로 스케줄러를 맞췄습니다."
+            echo "잔여 서울 원정 ${{ steps.scheduler.outputs.remaining }}경기 기준으로 스케줄러와 홈페이지 ON/OFF를 맞췄습니다."
           } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:

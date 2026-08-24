@@ -693,6 +693,7 @@ export function runSelfTest() {
   assert(/issues:\s*write/.test(workflow), 'sms-reminder.yml must grant issues: write for the fallback');
   assert(workflow.includes('GITHUB_TOKEN'), 'sms-reminder.yml must pass GITHUB_TOKEN to the reminder step');
   assert(workflow.includes('--auto-remaining'), 'sms-reminder.yml must auto-stop the scheduler when no Seoul-away games remain');
+  assert(workflow.includes('npm run pages:sync'), 'sms-reminder.yml must pages:sync when the scheduler state is committed');
 
   console.log('sms-reminder self-test ok');
 }
