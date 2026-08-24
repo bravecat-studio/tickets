@@ -1,10 +1,11 @@
 {
-  "enabled": true,
+  "enabled": false,
   "kinds": [
     "general"
   ],
   "watchIds": [],
   "leadMinutes": 60,
   "cronIntervalMinutes": 60,
-  "issueFallback": true
+  "issueFallback": true,
+  "autoDisabled": true
 }
