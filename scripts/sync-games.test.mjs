@@ -68,6 +68,7 @@ async function main() {
   assert(workflow.includes("cron: '20 1,13 * * *'"), 'workflow must run twice daily in KST');
   assert(workflow.includes('node scripts/sync-games.mjs'), 'workflow must run the sync script');
   assert(workflow.includes('client/src/data/games.json'), 'workflow must commit games.json');
+  assert(workflow.includes('--auto-remaining'), 'workflow must auto-stop the SMS scheduler when no Seoul-away games remain');
   assert(workflow.includes('actions/deploy-pages@v4'), 'workflow must deploy Pages after a schedule change');
 
   console.log('sync-games integration test ok');
