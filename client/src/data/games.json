@@ -118,5 +118,209 @@
     "venue": "home",
     "stadium": "광주-기아 챔피언스필드",
     "series": "홈 3연전"
+  },
+  {
+    "id": "2026-09-08-samsung",
+    "date": "2026-09-08",
+    "startTime": "18:30",
+    "opponent": "삼성 라이온즈",
+    "opponentShort": "삼성",
+    "venue": "away",
+    "stadium": "대구삼성라이온즈파크",
+    "series": "원정"
+  },
+  {
+    "id": "2026-09-09-nc",
+    "date": "2026-09-09",
+    "startTime": "18:30",
+    "opponent": "NC 다이노스",
+    "opponentShort": "NC",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈 2연전"
+  },
+  {
+    "id": "2026-09-10-nc",
+    "date": "2026-09-10",
+    "startTime": "18:30",
+    "opponent": "NC 다이노스",
+    "opponentShort": "NC",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈 2연전"
+  },
+  {
+    "id": "2026-09-12-kt",
+    "date": "2026-09-12",
+    "startTime": "17:00",
+    "opponent": "kt wiz",
+    "opponentShort": "KT",
+    "venue": "away",
+    "stadium": "수원KT위즈파크",
+    "series": "원정"
+  },
+  {
+    "id": "2026-09-13-hanwha",
+    "date": "2026-09-13",
+    "startTime": "17:00",
+    "opponent": "한화 이글스",
+    "opponentShort": "한화",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈"
+  },
+  {
+    "id": "2026-09-15-ssg",
+    "date": "2026-09-15",
+    "startTime": "18:30",
+    "opponent": "SSG 랜더스",
+    "opponentShort": "SSG",
+    "venue": "away",
+    "stadium": "인천SSG랜더스필드",
+    "series": "원정"
+  },
+  {
+    "id": "2026-09-17-kiwoom",
+    "date": "2026-09-17",
+    "startTime": "18:30",
+    "opponent": "키움 히어로즈",
+    "opponentShort": "키움",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈"
+  },
+  {
+    "id": "2026-09-19-nc",
+    "date": "2026-09-19",
+    "startTime": "17:00",
+    "opponent": "NC 다이노스",
+    "opponentShort": "NC",
+    "venue": "away",
+    "stadium": "창원NC파크",
+    "series": "원정 2연전"
+  },
+  {
+    "id": "2026-09-20-nc",
+    "date": "2026-09-20",
+    "startTime": "14:00",
+    "opponent": "NC 다이노스",
+    "opponentShort": "NC",
+    "venue": "away",
+    "stadium": "창원NC파크",
+    "series": "원정 2연전"
+  },
+  {
+    "id": "2026-09-23-doosan",
+    "date": "2026-09-23",
+    "startTime": "18:30",
+    "opponent": "두산 베어스",
+    "opponentShort": "두산",
+    "venue": "away",
+    "stadium": "잠실야구장",
+    "series": "서울 원정 · 재편성",
+    "host": "doosan"
+  },
+  {
+    "id": "2026-09-26-lg",
+    "date": "2026-09-26",
+    "startTime": "17:00",
+    "opponent": "LG 트윈스",
+    "opponentShort": "LG",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈 2연전"
+  },
+  {
+    "id": "2026-09-27-lg",
+    "date": "2026-09-27",
+    "startTime": "17:00",
+    "opponent": "LG 트윈스",
+    "opponentShort": "LG",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈 2연전"
+  },
+  {
+    "id": "2026-09-29-kt",
+    "date": "2026-09-29",
+    "startTime": "18:30",
+    "opponent": "kt wiz",
+    "opponentShort": "KT",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈 3연전"
+  },
+  {
+    "id": "2026-09-30-kt",
+    "date": "2026-09-30",
+    "startTime": "18:30",
+    "opponent": "kt wiz",
+    "opponentShort": "KT",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈 3연전"
+  },
+  {
+    "id": "2026-10-01-kt",
+    "date": "2026-10-01",
+    "startTime": "18:30",
+    "opponent": "kt wiz",
+    "opponentShort": "KT",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈 3연전"
+  },
+  {
+    "id": "2026-10-03-lg",
+    "date": "2026-10-03",
+    "startTime": "14:00",
+    "opponent": "LG 트윈스",
+    "opponentShort": "LG",
+    "venue": "away",
+    "stadium": "잠실야구장",
+    "series": "서울 원정 3연전",
+    "host": "lg"
+  },
+  {
+    "id": "2026-10-04-lg",
+    "date": "2026-10-04",
+    "startTime": "14:00",
+    "opponent": "LG 트윈스",
+    "opponentShort": "LG",
+    "venue": "away",
+    "stadium": "잠실야구장",
+    "series": "서울 원정 3연전",
+    "host": "lg"
+  },
+  {
+    "id": "2026-10-05-lg",
+    "date": "2026-10-05",
+    "startTime": "14:00",
+    "opponent": "LG 트윈스",
+    "opponentShort": "LG",
+    "venue": "away",
+    "stadium": "잠실야구장",
+    "series": "서울 원정 3연전",
+    "host": "lg"
+  },
+  {
+    "id": "2026-10-06-samsung",
+    "date": "2026-10-06",
+    "startTime": "18:30",
+    "opponent": "삼성 라이온즈",
+    "opponentShort": "삼성",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈"
+  },
+  {
+    "id": "2026-10-07-lotte",
+    "date": "2026-10-07",
+    "startTime": "18:30",
+    "opponent": "롯데 자이언츠",
+    "opponentShort": "롯데",
+    "venue": "away",
+    "stadium": "사직야구장",
+    "series": "원정"
   }
 ]
