@@ -2,8 +2,9 @@ name: sms-reminder
 
 on:
   schedule:
-    # Hourly. GitHub cron is UTC; the due window is the 60 minutes before open.
-    - cron: '0 * * * *'
+    # Twice daily for general sales: 10:00 KST (LG/Doosan 11:00 open) and 13:00 KST (Kiwoom 14:00 open).
+    # GitHub cron is UTC.
+    - cron: '0 1,4 * * *'
   workflow_dispatch:
     inputs:
       scheduler:
@@ -59,7 +60,7 @@ jobs:
             echo "already ${SCHEDULER_ACTION}"
             {
               echo "### 문자 스케줄러 ${SCHEDULER_ACTION}"
-              echo "이미 같은 상태입니다. 이후 매시 정각 실행에 그대로 적용됩니다."
+              echo "이미 같은 상태입니다. 이후 매일 10:00·13:00 KST 실행에 그대로 적용됩니다."
             } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
@@ -70,7 +71,7 @@ jobs:
           git push
           {
             echo "### 문자 스케줄러 ${SCHEDULER_ACTION}"
-            echo "sms.config.json enabled 값과 홈페이지 ON/OFF 표시를 저장했습니다. 이후 매시 정각 실행에 적용됩니다."
+            echo "sms.config.json enabled 값과 홈페이지 ON/OFF 표시를 저장했습니다. 이후 매일 10:00·13:00 KST 실행에 적용됩니다."
           } >> "$GITHUB_STEP_SUMMARY"
 
   remind:

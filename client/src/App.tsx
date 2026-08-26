@@ -341,7 +341,7 @@ export default function App() {
       <section className="panel">
         <h3>오픈 1시간 전 문자 알림</h3>
         <p className="hint">
-          GitHub Actions가 매시 정각에 일정을 보고, <strong>서울 원정 예매 오픈</strong> 1시간 전부터 오픈 직전 사이에만
+          GitHub Actions가 매일 10:00·13:00 KST에 일정을 보고, <strong>서울 원정 일반예매 오픈</strong> 1시간 전부터 오픈 직전 사이에만
           문자를 보냅니다. 광주 홈경기와 창원 등 서울 밖 원정에는 보내지 않습니다. 이 탭이 열려 있으면 같은 시각에
           브라우저 알림으로도 알려 드립니다. 전화번호는 저장소 Secrets에만 두고, 이 페이지에는 넣지 마세요.
         </p>
@@ -352,7 +352,7 @@ export default function App() {
           >
             문자 스케줄러 {SMS_SCHEDULER.enabled ? 'ON' : 'OFF'}
           </span>
-          <span className="mini">매시 정각 · 서울 원정만 · 오픈 1시간 전</span>
+          <span className="mini">매일 10:00·13:00 · 서울 원정만 · 오픈 1시간 전</span>
         </div>
         <div className="toggles">
           <label>
@@ -385,7 +385,7 @@ export default function App() {
             <code>watchIds</code>가 있으면 그 서울 원정만 발송
           </li>
           <li>
-            스케줄 워크플로는 <code>main</code>에 머지된 뒤에만 매시 정각에 실행됩니다
+            스케줄 워크플로는 <code>main</code>에 머지된 뒤에만 매일 10:00·13:00 KST에 실행됩니다
           </li>
         </ul>
         <div className="hero__actions">
