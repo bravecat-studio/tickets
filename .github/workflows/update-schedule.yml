@@ -13,8 +13,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
   group: update-schedule
@@ -24,8 +22,6 @@ jobs:
   sync:
     name: sync remaining games
     runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.commit.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -82,33 +78,3 @@ jobs:
             echo "### 문자 스케줄러 ${{ steps.scheduler.outputs.action }}"
             echo "잔여 서울 원정 ${{ steps.scheduler.outputs.remaining }}경기 기준으로 스케줄러와 홈페이지 ON/OFF를 맞췄습니다."
           } >> "$GITHUB_STEP_SUMMARY"
-
-  deploy:
-    name: deploy pages
-    needs: sync
-    if: github.ref == 'refs/heads/main' && needs.sync.outputs.changed == 'true'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run typecheck -w client
-      - run: npm run build -w client
-        env:
-          BASE_PATH: /tickets/
-      - run: cp client/dist/index.html client/dist/404.html
-      - run: node scripts/sync-pages-fallback.mjs --check
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: client/dist
-      - id: deployment
-        uses: actions/deploy-pages@v4
