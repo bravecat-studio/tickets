@@ -71,7 +71,10 @@ async function main() {
   assert(workflow.includes('--auto-remaining'), 'workflow must auto-stop the SMS scheduler when no Seoul-away games remain');
   const autoCommit = workflow.split('Commit SMS scheduler auto state')[1] ?? '';
   assert(autoCommit.includes('npm run pages:sync'), 'workflow must pages:sync when auto-stopping the SMS scheduler');
-  assert(workflow.includes('actions/deploy-pages@v4'), 'workflow must deploy Pages after a schedule change');
+  // Pages deploy lives in github-pages.yml (push). update-schedule only commits;
+  // a second deploy-pages here races the push-triggered deploy.
+  assert(!workflow.includes('actions/deploy-pages@v4'), 'update-schedule must not deploy Pages itself');
+  assert(workflow.includes('npm run pages:sync'), 'workflow must keep the branch-source Pages fallback in sync');
 
   console.log('sync-games integration test ok');
 }
