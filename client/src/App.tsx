@@ -273,6 +273,11 @@ export default function App() {
                 오픈 일정 ICS
               </button>
             </div>
+            <p className="hint" style={{ marginTop: '0.75rem' }}>
+              <strong>오픈 일정 ICS</strong>는 다가오는 서울 원정 예매 오픈(최대 12건)을 캘린더 파일로 받습니다. 각 일정에{' '}
+              <strong>오픈 1시간 전 알림</strong>이 포함되어 있습니다. Apple 캘린더·Google 캘린더·Outlook 등에서 열면 됩니다. 홈경기·서울 밖
+              원정은 들어가지 않으며, 우천 재편성 시 다시 받아 주세요.
+            </p>
           </>
         ) : (
           <p>표시할 서울 원정 예매 일정이 없습니다. 우천 재편성은 홈 구단·KBO 공지를 확인하세요.</p>
