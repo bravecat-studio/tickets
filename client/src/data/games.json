@@ -1,15 +1,5 @@
 [
   {
-    "id": "2026-08-28-ssg",
-    "date": "2026-08-28",
-    "startTime": "18:30",
-    "opponent": "SSG 랜더스",
-    "opponentShort": "SSG",
-    "venue": "home",
-    "stadium": "광주-기아 챔피언스필드",
-    "series": "홈 3연전"
-  },
-  {
     "id": "2026-08-29-ssg",
     "date": "2026-08-29",
     "startTime": "18:00",
@@ -17,7 +7,7 @@
     "opponentShort": "SSG",
     "venue": "home",
     "stadium": "광주-기아 챔피언스필드",
-    "series": "홈 3연전"
+    "series": "홈 2연전"
   },
   {
     "id": "2026-08-30-ssg",
@@ -27,7 +17,7 @@
     "opponentShort": "SSG",
     "venue": "home",
     "stadium": "광주-기아 챔피언스필드",
-    "series": "홈 3연전"
+    "series": "홈 2연전"
   },
   {
     "id": "2026-09-01-nc",
@@ -118,6 +108,16 @@
     "venue": "home",
     "stadium": "광주-기아 챔피언스필드",
     "series": "홈 2연전"
+  },
+  {
+    "id": "2026-09-11-ssg",
+    "date": "2026-09-11",
+    "startTime": "18:30",
+    "opponent": "SSG 랜더스",
+    "opponentShort": "SSG",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈"
   },
   {
     "id": "2026-09-12-kt",
