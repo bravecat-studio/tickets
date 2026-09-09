@@ -1,15 +1,5 @@
 [
   {
-    "id": "2026-09-08-samsung",
-    "date": "2026-09-08",
-    "startTime": "18:30",
-    "opponent": "삼성 라이온즈",
-    "opponentShort": "삼성",
-    "venue": "away",
-    "stadium": "대구삼성라이온즈파크",
-    "series": "원정"
-  },
-  {
     "id": "2026-09-09-nc",
     "date": "2026-09-09",
     "startTime": "18:30",
