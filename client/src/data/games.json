@@ -1,15 +1,5 @@
 [
   {
-    "id": "2026-09-13-hanwha",
-    "date": "2026-09-13",
-    "startTime": "17:00",
-    "opponent": "한화 이글스",
-    "opponentShort": "한화",
-    "venue": "home",
-    "stadium": "광주-기아 챔피언스필드",
-    "series": "홈"
-  },
-  {
     "id": "2026-09-15-ssg",
     "date": "2026-09-15",
     "startTime": "18:30",
