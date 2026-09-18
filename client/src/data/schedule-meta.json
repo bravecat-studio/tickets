@@ -1,9 +1,9 @@
 {
   "source": "https://api-gw.sports.naver.com/schedule/games",
   "sourceLabel": "네이버 스포츠 (KBO)",
-  "updatedAt": "2026-09-16T01:37:06.291Z",
-  "fromDate": "2026-09-16",
+  "updatedAt": "2026-09-18T01:36:23.631Z",
+  "fromDate": "2026-09-18",
   "toDate": "2026-11-30",
-  "gameCount": 14,
+  "gameCount": 13,
   "tbdCount": 1
 }
