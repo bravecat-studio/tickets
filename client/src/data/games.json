@@ -71,5 +71,45 @@
     "venue": "away",
     "stadium": "사직야구장",
     "series": "원정"
+  },
+  {
+    "id": "2026-10-09-nc",
+    "date": "2026-10-09",
+    "startTime": "14:00",
+    "opponent": "NC 다이노스",
+    "opponentShort": "NC",
+    "venue": "away",
+    "stadium": "창원NC파크",
+    "series": "원정"
+  },
+  {
+    "id": "2026-10-10-ssg",
+    "date": "2026-10-10",
+    "startTime": "17:00",
+    "opponent": "SSG 랜더스",
+    "opponentShort": "SSG",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈"
+  },
+  {
+    "id": "2026-10-11-lotte",
+    "date": "2026-10-11",
+    "startTime": "14:00",
+    "opponent": "롯데 자이언츠",
+    "opponentShort": "롯데",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈"
+  },
+  {
+    "id": "2026-10-12-lg",
+    "date": "2026-10-12",
+    "startTime": "18:30",
+    "opponent": "LG 트윈스",
+    "opponentShort": "LG",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "홈"
   }
 ]
