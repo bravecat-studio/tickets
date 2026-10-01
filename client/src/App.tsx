@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { GAMES_2026, SCHEDULE_META, TBD_SEOUL_AWAY, type Game } from './data/games';
+import { GAMES_2026, SCHEDULE_META, SEASON, TBD_SEOUL_AWAY, type Game } from './data/games';
 import { HOSTS, SEOUL_HOST_SUMMARY, hostFor, isSeoulAway, ticketUrlFor } from './data/hosts';
-import { APP_STORES, OFFICIAL_LINKS } from './data/links';
+import { APP_STORES, COMPANY_LINKS, OFFICIAL_LINKS } from './data/links';
 import type { SaleKind } from './data/policy';
 import { HOST_SEATS, SEAT_TIPS } from './data/seats';
 import { downloadIcs, salesToIcs } from './lib/ics';
@@ -215,6 +215,13 @@ export default function App() {
         좌석 점유·결제·매크로·암표 기능은 없습니다. 실제 구매는 상대 구단 공식 예매처(NOL 인터파크 또는 티켓링크)에서만
         완료하세요. 일정은 우천·재편성으로 바뀔 수 있으며 홈 구단·KBO 공지가 우선입니다.
       </aside>
+
+      {SEASON.status === 'ended' && (
+        <aside className="notice">
+          <strong>{SEASON.season} 시즌 일정이 끝났습니다.</strong>
+          문자 알림·일정 자동 갱신 스케줄을 멈췄습니다. 다음 시즌 KBO 일정이 공개되면 자동으로 다시 시작합니다.
+        </aside>
+      )}
 
       <section className="hero">
         {target ? (
@@ -619,6 +626,11 @@ export default function App() {
         KIA 타이거즈·키움·LG·두산·NOL·티켓링크와 무관한 개인용 서울 원정 일정 도우미입니다. 상표·일정·요금의 권리는
         각 구단과 예매처에 있습니다. 잔여 일정은 {SCHEDULE_META.sourceLabel} 기준으로{' '}
         {formatKstDateTime(new Date(SCHEDULE_META.updatedAt))}에 자동 갱신했습니다.
+        <nav className="foot__links" aria-label="운영사">
+          <a href={COMPANY_LINKS.about} target="_blank" rel="noreferrer">
+            회사 소개 · Bravecat Studio
+          </a>
+        </nav>
       </footer>
     </div>
   );

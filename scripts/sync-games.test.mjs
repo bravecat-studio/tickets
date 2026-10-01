@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
-import { monthRange, monthsBetween, naverUrl, fetchMonth, fetchSeason, runSelfTest } from './sync-games.mjs';
+import { monthRange, monthsBetween, naverUrl, fetchMonth, fetchSeason, runSelfTest, seasonWindow } from './sync-games.mjs';
 
 function assert(ok, message) {
   if (!ok) throw new Error(`sync-games.test failed: ${message}`);
@@ -27,6 +27,9 @@ async function main() {
       .join(',') === '2026-10-01,2026-11-01',
     'season tail walks month by month',
   );
+  assert(seasonWindow(new Date('2026-11-30T12:00:00+09:00')).fromDate === '2026-03-01', 'November still syncs this season');
+  assert(seasonWindow(new Date('2026-12-01T00:00:00+09:00')).fromDate === '2027-03-01', 'December looks for next season');
+  assert(seasonWindow(new Date('2027-01-15T12:00:00+09:00')).toDate === '2027-11-30', 'January looks at the new season');
   assert(naverUrl('2026-08-01', '2026-08-31').includes('fromDate=2026-08-01'), 'Naver URL carries the month window');
 
   const urls = [];

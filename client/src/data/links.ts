@@ -18,3 +18,7 @@ export const APP_STORES = {
     'https://play.google.com/store/apps/details?id=kr.co.ticketlink.cne&pcampaignid=web_share',
   ticketlinkIos: 'https://apps.apple.com/kr/app/ticketlink/id410310193',
 } as const;
+
+export const COMPANY_LINKS = {
+  about: 'https://bravecat.studio/about/',
+} as const;

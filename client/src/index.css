@@ -427,6 +427,16 @@ td {
   font-size: 13px;
 }
 
+.foot__links {
+  margin-top: 10px;
+}
+
+.foot__links a {
+  color: var(--gold);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
 @media (max-width: 820px) {
   .top,
   .game,

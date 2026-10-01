@@ -122,6 +122,24 @@ NOW=2026-08-16T13:05:00+09:00 DRY_RUN=1 npm run sms:reminder
 - 로컬: `npm run schedule:sync` (미리보기 `npm run schedule:sync:dry`)
 - 예매 정책·구장 URL은 그대로 `client/src/data/hosts.json` 을 수정하세요.
 
+## 시즌 종료·시작 시 자동 스케줄
+
+시즌 상태는 `client/src/data/season.json`(`active` / `ended`)에 저장되고, GitHub Actions 스케줄을 시즌에 맞춰 자동으로 끄고 켭니다.
+
+| 시점 | 무엇이 일어나나 |
+| --- | --- |
+| **시즌 종료** | `update-schedule`이 잔여 KIA 경기 0경기를 확인하면 `season.json`을 `ended`로 바꾸고, `sms-reminder`·`update-schedule` 워크플로를 **비활성화**합니다. 대신 `season-scheduler` 워크플로를 활성화합니다. 홈페이지에 시즌 종료 안내가 뜹니다. |
+| **비시즌** | `season-scheduler`가 매일 09:50 KST에 네이버 스포츠 KBO 일정을 확인합니다. 12월부터는 다음 해 3~11월 일정을 봅니다. 아직 공개 전이면 아무것도 바꾸지 않습니다. |
+| **시즌 시작** | 새 시즌(또는 포스트시즌) KIA 경기가 공개되면 `games.json`을 갱신하고 `season.json`을 `active`로 바꾼 뒤, `sms-reminder`·`update-schedule`을 **다시 활성화**하고 `season-scheduler`는 스스로 꺼집니다. 문자 스케줄러가 자동으로 꺼져 있었다면 서울 원정 일정에 맞춰 다시 켜집니다. |
+
+수동으로 바꾸려면 Actions → `season-scheduler` → **Run workflow** 에서 `season`을 고릅니다.
+
+- `auto`: 지금 일정을 보고 자동 판단 (기본값)
+- `start`: 지금 시즌 스케줄 시작. 잔여 경기가 없으면 다음 `update-schedule` 실행에서 다시 자동 종료됩니다.
+- `end`: 지금 시즌 스케줄 종료. 이번 시즌에는 경기가 남아 있어도 자동으로 다시 켜지지 않고, **다음 해 일정이 공개되면** 자동으로 시작합니다.
+
+비시즌에 `season-scheduler`가 돌 때마다 자신을 다시 활성화하므로, 저장소 활동이 60일 없어서 스케줄이 자동 비활성화되는 GitHub 규칙에 걸리지 않도록 합니다. 현재 상태는 `npm run season:status` 로 확인합니다.
+
 ## 개발 스크립트
 
 | 명령 | 설명 |
@@ -130,5 +148,6 @@ NOW=2026-08-16T13:05:00+09:00 DRY_RUN=1 npm run sms:reminder
 | `npm run test` | 예매 오픈 시각 단위 테스트 + 문자 발송·재시도·대체 알림 통합 테스트 + 일정 동기화 테스트 |
 | `npm run build` | 서버+클라이언트 빌드 |
 | `npm run schedule:sync` | 네이버 스포츠에서 잔여 일정을 가져와 `games.json` 갱신 |
+| `npm run season:status` | 시즌 상태(`season.json`) 확인 |
 | `npm run pages:sync` | Pages 브랜치 배포용으로 클라이언트 빌드를 저장소 루트에 복사 |
 | `npm run sms:reminder:dry` | 지금 시각 기준 문자 대상 로그 (미발송). 서울 원정이 아니면 대상 없음 |

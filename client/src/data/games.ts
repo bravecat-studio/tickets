@@ -1,6 +1,7 @@
 import games from './games.json';
 import tbd from './tbd.json';
 import scheduleMeta from './schedule-meta.json';
+import season from './season.json';
 import type { HostId } from './hosts';
 
 export type Venue = 'home' | 'away';
@@ -27,6 +28,14 @@ export interface SeoulAwayTbd {
   reason: string;
 }
 
+/** 시즌 상태. `season-scheduler`가 시즌 종료/시작 시 GitHub Actions 스케줄과 함께 갱신합니다. */
+export interface SeasonState {
+  status: 'active' | 'ended';
+  season: number;
+  manual: boolean;
+  updatedAt: string;
+}
+
 export interface ScheduleMeta {
   source: string;
   sourceLabel: string;
@@ -48,3 +57,5 @@ export const GAMES_2026: Game[] = games as Game[];
 export const TBD_SEOUL_AWAY: readonly SeoulAwayTbd[] = tbd as SeoulAwayTbd[];
 
 export const SCHEDULE_META: ScheduleMeta = scheduleMeta as ScheduleMeta;
+
+export const SEASON: SeasonState = season as SeasonState;
