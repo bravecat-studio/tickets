@@ -13,6 +13,8 @@ on:
 
 permissions:
   contents: write
+  # Season end disables sms-reminder/update-schedule and enables season-scheduler.
+  actions: write
 
 concurrency:
   group: update-schedule
@@ -35,6 +37,11 @@ jobs:
         env:
           DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
         run: node scripts/sms-scheduler-toggle.mjs --auto-remaining
+      - name: Detect season end
+        id: season
+        env:
+          DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+        run: node scripts/season-scheduler.mjs --auto
       - name: Commit schedule
         id: commit
         env:
@@ -42,7 +49,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add client/src/data/games.json client/src/data/tbd.json client/src/data/schedule-meta.json
+          git add client/src/data/games.json client/src/data/tbd.json client/src/data/schedule-meta.json client/src/data/season.json
           if git diff --staged --quiet; then
             echo 'changed=false' >> "$GITHUB_OUTPUT"
             echo '일정 변경 없음' >> "$GITHUB_STEP_SUMMARY"
@@ -77,4 +84,16 @@ jobs:
           {
             echo "### 문자 스케줄러 ${{ steps.scheduler.outputs.action }}"
             echo "잔여 서울 원정 ${{ steps.scheduler.outputs.remaining }}경기 기준으로 스케줄러와 홈페이지 ON/OFF를 맞췄습니다."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Stop season workflows
+        # Season over: hand off to the season-scheduler watcher until next season.
+        if: ${{ steps.season.outputs.status == 'ended' }}
+        env:
+          DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/season-scheduler.mjs --apply-workflows
+          {
+            echo '### 시즌 종료'
+            echo '잔여 KIA 경기가 없어 sms-reminder·update-schedule 스케줄을 멈추고 season-scheduler가 다음 시즌 일정을 기다립니다.'
           } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,84 @@
+name: season-scheduler
+
+on:
+  schedule:
+    # Off-season watcher: 09:50 KST daily. GitHub cron is UTC.
+    # Enabled when the season ends, disabled again once the next season starts.
+    - cron: '50 0 * * *'
+  workflow_dispatch:
+    inputs:
+      season:
+        description: '시즌 스케줄 — auto 일정 보고 자동 판단 / start 지금 시작 / end 지금 종료'
+        type: choice
+        options:
+          - auto
+          - 'start'
+          - 'end'
+        default: auto
+      dry_run:
+        description: '커밋·워크플로 변경 없이 로그만'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  # Enable/disable sms-reminder, update-schedule and this watcher.
+  actions: write
+
+# Shares the update-schedule group so both never push games.json at once.
+concurrency:
+  group: update-schedule
+  cancel-in-progress: false
+
+jobs:
+  season:
+    name: season ${{ github.event.inputs.season || 'auto' }}
+    runs-on: ubuntu-latest
+    env:
+      SEASON_ACTION: ${{ github.event.inputs.season || 'auto' }}
+      DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Fetch KBO schedule
+        if: ${{ env.SEASON_ACTION == 'auto' }}
+        env:
+          # Next season may not be published yet; keep games.json instead of failing.
+          SYNC_ALLOW_EMPTY: '1'
+        run: node scripts/sync-games.mjs
+      - name: Decide season
+        id: season
+        run: |
+          if [ "$SEASON_ACTION" = 'auto' ]; then
+            node scripts/season-scheduler.mjs --auto
+          else
+            node scripts/season-scheduler.mjs "$SEASON_ACTION"
+          fi
+      - name: Reconcile SMS scheduler with remaining games
+        run: node scripts/sms-scheduler-toggle.mjs --auto-remaining
+      - name: Commit season state
+        if: ${{ env.DRY_RUN != '1' }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add client/src/data/games.json client/src/data/tbd.json client/src/data/schedule-meta.json client/src/data/season.json sms.config.json
+          if git diff --staged --quiet; then
+            echo "season ${{ steps.season.outputs.status }} — 변경 없음" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          npm ci
+          npm run pages:sync
+          git add index.html 404.html favicon.svg .nojekyll assets
+          git commit -m "chore: season ${{ steps.season.outputs.action }}"
+          git push
+          {
+            echo "### 시즌 ${{ steps.season.outputs.action }}"
+            echo "season.json status=${{ steps.season.outputs.status }} 와 홈페이지 시즌 안내를 저장했습니다."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Start/stop season workflows
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/season-scheduler.mjs --apply-workflows

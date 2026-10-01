@@ -104,7 +104,9 @@ export function monthsBetween(fromYmd, toYmd) {
 }
 
 export function seasonWindow(now = new Date()) {
-  const year = kstYear(now);
+  const today = kstYmd(now);
+  // After the season window closes (December), look for next season's schedule.
+  const year = kstYear(now) + (today.slice(5) > '11-30' ? 1 : 0);
   return { fromDate: `${year}-03-01`, toDate: `${year}-11-30` };
 }
 
@@ -363,13 +365,17 @@ export function writeSchedule({ games, tbd, meta, dryRun = false }) {
   return files;
 }
 
-export async function syncGames({ now = new Date(), dryRun = false, fetchImpl, previous } = {}) {
+export async function syncGames({ now = new Date(), dryRun = false, allowEmpty = false, fetchImpl, previous } = {}) {
   const today = kstYmd(now);
   const window = seasonWindow(now);
   const raw = await fetchSeason(window.fromDate, window.toDate, { fetchImpl });
   const prev = previous ?? loadJson(GAMES_PATH);
   const prevTbd = loadJson(TBD_PATH);
   const { games, tbd, kiaCount } = buildSchedule(raw, { today, previous: prev });
+  if (kiaCount === 0 && allowEmpty) {
+    // Off-season: next season's schedule is not published yet. Keep files as-is.
+    return { games: prev, tbd: prevTbd, meta: loadJson(META_PATH, {}), kiaCount, today, window, unchanged: true, empty: true };
+  }
   if (kiaCount === 0) {
     throw new Error('네이버 스포츠에서 KIA 일정을 하나도 받지 못했습니다. games.json을 덮어쓰지 않습니다.');
   }
@@ -576,8 +582,13 @@ async function main() {
     return 0;
   }
   const dryRun = process.argv.includes('--dry-run') || process.env.DRY_RUN === '1';
+  const allowEmpty = process.env.SYNC_ALLOW_EMPTY === '1';
   const now = process.env.NOW ? new Date(process.env.NOW) : new Date();
-  const result = await syncGames({ now, dryRun });
+  const result = await syncGames({ now, dryRun, allowEmpty });
+  if (result.empty) {
+    console.log(`no KIA games published yet [${result.window.fromDate} → ${result.window.toDate}]; keeping games.json`);
+    return 0;
+  }
   const seoul = result.games.filter((game) => game.host);
   console.log(
     `${dryRun ? 'dry-run ' : ''}${result.unchanged ? 'unchanged' : 'synced'} ${result.games.length} remaining games (${seoul.length} Seoul away), TBD ${result.tbd.length}, KIA rows ${result.kiaCount} [${result.today} → ${result.window.toDate}]`,
