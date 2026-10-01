@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'client', 'dist');
 const check = process.argv.includes('--check');
-const siteFiles = ['index.html', '404.html', 'favicon.svg'];
+const siteFiles = ['index.html', '404.html', 'favicon.svg', 'CNAME'];
 
 function fail(message) {
   console.error(message);
@@ -32,7 +32,7 @@ function listFiles(dir) {
 }
 
 if (!fs.existsSync(path.join(dist, 'index.html'))) {
-  fail('client/dist/index.html 가 없습니다. 먼저 BASE_PATH=/tickets/ npm run build -w client 를 실행하세요.');
+  fail('client/dist/index.html 가 없습니다. 먼저 BASE_PATH=/ npm run build -w client 를 실행하세요.');
 }
 
 if (!fs.existsSync(path.join(dist, '404.html'))) {
