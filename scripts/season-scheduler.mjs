@@ -3,12 +3,14 @@
  * Start/stop every scheduled GitHub Actions workflow with the KBO season.
  *
  * - Season end: no remaining KIA games and
- *   - KIA is not in the postseason field (schedule-meta.json `postseason.kia`
- *     is `out`: five other clubs are listed) → ends right away, or
- *   - KIA's postseason run / the season is over: no remaining KIA games for
- *     END_GRACE_DAYS (a rainout can still get a makeup date; rounds have gaps).
- *     While KIA's entry is still `unknown` it waits for the league's last game
- *     (a top seed waits ~3 weeks for the Korean Series).
+ *   - KIA is out of the postseason (schedule-meta.json `postseason.kia` is `out`:
+ *     eliminated in the standings built from Naver results, or five other clubs fill the bracket)
+ *     → ends right away, or
+ *   - KIA's postseason run is over (it appeared in the bracket): no remaining
+ *     KIA games for END_GRACE_DAYS (rainouts, gaps between rounds), or
+ *   - KIA has not appeared in the bracket yet (`unknown`, or clinched but its
+ *     first series is not listed — a top seed waits ~3 weeks for the Korean
+ *     Series): wait for the league's last game, then END_GRACE_DAYS.
  *   → season.json `ended`,
  *   `sms-reminder` and `update-schedule` are disabled. Only `season-scheduler`
  *   stays enabled, and its cron fires on a few fixed dates only.
@@ -95,7 +97,7 @@ export function decideSeason(state, { remainingDates, today, leagueLastDate = nu
       action: 'auto-end-no-postseason',
     };
   }
-  if (kiaEntry === 'unknown' && leagueLastDate && leagueLastDate >= today) {
+  if (!postseason?.listed && leagueLastDate && leagueLastDate >= today) {
     // Postseason still running: KIA may yet be drawn in (e.g. a top seed waits ~3 weeks for the Korean Series).
     if (!state.noGamesSince) return { state, action: 'postseason-wait' };
     const next = { ...state, updatedAt: stamp };
@@ -273,9 +275,17 @@ export function runSelfTest() {
     remainingDates: [],
     today: '2026-10-12',
     leagueLastDate: '2026-10-31',
-    postseason: { kia: 'in' },
+    postseason: { kia: 'in', listed: true },
     now,
   });
+  const clinched = decideSeason(active, {
+    remainingDates: [],
+    today: '2026-10-05',
+    leagueLastDate: '2026-10-08',
+    postseason: { kia: 'in', listed: false },
+    now,
+  });
+  assert(clinched.action === 'postseason-wait', 'a clinched top seed waits for its series to be listed');
   assert(knockedOut.action === 'end-pending', 'after KIA is knocked out the grace period runs without waiting for the Korean Series');
   const pending = decideSeason(active, { remainingDates: [], today: '2026-10-20', leagueLastDate: '2026-10-19', now });
   assert(pending.action === 'end-pending' && pending.state.status === 'active', 'first empty day only starts the grace period');

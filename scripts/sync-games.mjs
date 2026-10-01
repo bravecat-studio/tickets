@@ -140,24 +140,72 @@ export function isExhibition(raw) {
 const POSTSEASON_WORDS = /포스트시즌|와일드카드|준플레이오프|플레이오프|한국시리즈/;
 
 /**
- * Wildcard ~ Korean Series. Naver tags regular games `kbo_r` and exhibitions
- * `kbo_e`; any other round code (or a round name naming a postseason round) is postseason.
+ * Wildcard ~ Korean Series. Naver round codes (checked against 2024·2025):
+ * `kbo_r` regular, `kbo_e` exhibition, `kbo_p` 5th-place tiebreaker (2024-10-01),
+ * `kbo_ps_wd` wildcard, `kbo_ps_sp` semi-playoff, `kbo_ps_po` playoff, `kbo_ps_ks` Korean Series.
+ * The tiebreaker is not postseason: its loser never enters the bracket.
  */
 export function isPostseason(raw) {
-  if (isExhibition(raw)) return false;
-  if (raw.roundCode && raw.roundCode !== 'kbo_r') return true;
-  return [raw.roundName, raw.seriesName, raw.gameRound, raw.title].some((v) => POSTSEASON_WORDS.test(String(v ?? '')));
+  if (String(raw.roundCode ?? '').startsWith('kbo_ps')) return true;
+  return [raw.roundName, raw.title].some((v) => POSTSEASON_WORDS.test(String(v ?? '')));
 }
 
 /** KBO postseason field since 2015: 1st~5th place (wildcard 4 vs 5). */
 export const POSTSEASON_TEAM_COUNT = 5;
 
+/** Regular-season games per club since 2015. */
+export const REGULAR_SEASON_GAMES = 144;
+
 /**
- * KIA's postseason entry from the postseason games Naver lists (any round,
- * played or upcoming, cancelled included — a rainout keeps its teams).
- * - `in`: KIA appears in a postseason game.
- * - `out`: 5+ other clubs are listed, so every slot is taken without KIA.
- * - `unknown`: bracket not filled in yet.
+ * Regular-season standings from the same Naver schedule rows (`winner` HOME/AWAY/DRAW
+ * on finished `kbo_r` games). Matches the KBO official table; the KBO site itself
+ * forbids automated collection (robots.txt), so it is not scraped.
+ */
+export function standingsFromSchedule(rawGames) {
+  const table = new Map();
+  for (const raw of rawGames) {
+    if (raw.roundCode !== 'kbo_r' || raw.statusCode !== 'RESULT' || isCancelled(raw)) continue;
+    for (const [code, side] of [
+      [raw.homeTeamCode, 'HOME'],
+      [raw.awayTeamCode, 'AWAY'],
+    ]) {
+      if (!TEAMS[code]) continue;
+      const row = table.get(code) ?? { code, games: 0, wins: 0, losses: 0, draws: 0 };
+      row.games += 1;
+      if (raw.winner === 'DRAW') row.draws += 1;
+      else if (raw.winner === side) row.wins += 1;
+      else row.losses += 1;
+      table.set(code, row);
+    }
+  }
+  return [...table.values()];
+}
+
+/**
+ * Mathematical top-5 check from the standings (win% = W / (W + L), draws excluded;
+ * remaining games = 144 - played).
+ * - `out`: five clubs finish above KIA's best case even if they lose every remaining game.
+ * - `in`: at most four clubs can reach KIA's worst case, so KIA finishes top 5 outright.
+ * A tie for 5th stays `unknown` (KBO plays a tiebreaker).
+ */
+export function standingsEntry(rows) {
+  const kia = rows.find((row) => row.code === KIA);
+  if (!kia || rows.length < Object.keys(TEAMS).length) return 'unknown';
+  const pct = (w, l) => (w + l === 0 ? 0 : w / (w + l));
+  const left = (row) => Math.max(0, REGULAR_SEASON_GAMES - row.games);
+  const kiaBest = pct(kia.wins + left(kia), kia.losses);
+  const kiaWorst = pct(kia.wins, kia.losses + left(kia));
+  const others = rows.filter((row) => row.code !== KIA);
+  if (others.filter((row) => pct(row.wins, row.losses + left(row)) > kiaBest).length >= POSTSEASON_TEAM_COUNT) return 'out';
+  if (others.filter((row) => pct(row.wins + left(row), row.losses) >= kiaWorst).length < POSTSEASON_TEAM_COUNT) return 'in';
+  return 'unknown';
+}
+
+/**
+ * KIA's postseason entry.
+ * - `listed`: KIA appears in a postseason game Naver lists (any round, rainouts included).
+ * - `kia`: `in` when listed or clinched in the standings; `out` when eliminated in the
+ *   standings or when five other clubs fill the bracket; otherwise `unknown`.
  */
 export function postseasonEntry(rawGames) {
   const teams = new Set();
@@ -165,9 +213,14 @@ export function postseasonEntry(rawGames) {
     if (!isPostseason(raw)) continue;
     for (const code of [raw.homeTeamCode, raw.awayTeamCode]) if (TEAMS[code]) teams.add(code);
   }
+  const listed = teams.has(KIA);
   const others = [...teams].filter((code) => code !== KIA);
-  const kia = teams.has(KIA) ? 'in' : others.length >= POSTSEASON_TEAM_COUNT ? 'out' : 'unknown';
-  return { kia, teams: [...teams].sort() };
+  const fromStandings = standingsEntry(standingsFromSchedule(rawGames));
+  let kia = 'unknown';
+  if (listed) kia = 'in';
+  else if (others.length >= POSTSEASON_TEAM_COUNT || fromStandings === 'out') kia = 'out';
+  else if (fromStandings === 'in') kia = 'in';
+  return { kia, listed, teams: [...teams].sort() };
 }
 
 /** Last scheduled (not cancelled) league game on or after today, any team. Null once the postseason is over. */
@@ -464,7 +517,7 @@ export async function syncGames({ now = new Date(), dryRun = false, allowEmpty =
         postseason,
       };
   if (!unchanged) writeSchedule({ games, tbd, meta, dryRun });
-  return { games, tbd, meta, kiaCount, today, window, unchanged };
+  return { games, tbd, meta, kiaCount, today, window, unchanged, standings: standingsFromSchedule(raw) };
 }
 
 export function runSelfTest() {
@@ -651,7 +704,7 @@ export function runSelfTest() {
     stadium,
     homeTeamCode: home,
     awayTeamCode: away,
-    roundCode: 'kbo_ks',
+    roundCode: 'kbo_ps_ks',
     cancel: false,
   });
   const post = buildSchedule(
@@ -665,20 +718,46 @@ export function runSelfTest() {
   assert(post.games[0].host === undefined, 'Gwangju postseason home games are not sale targets');
   assert(post.games[2].series === '포스트시즌 vs LG', 'postseason series label');
   assert(!post.tbd.some((row) => row.opponent.startsWith('LG') && row.reason.includes('10/')), 'postseason games never feed the regular TBD list');
-  assert(isPostseason({ roundCode: 'kbo_r', roundName: '한국시리즈' }), 'round name fallback detects the postseason');
+  for (const code of ['kbo_ps_wd', 'kbo_ps_sp', 'kbo_ps_po', 'kbo_ps_ks']) assert(isPostseason({ roundCode: code }), `${code} is postseason`);
+  assert(isPostseason({ roundCode: 'kbo_x', roundName: '한국시리즈' }), 'round name fallback detects the postseason');
   assert(!isPostseason({ roundCode: 'kbo_r' }) && !isPostseason({ roundCode: 'kbo_e' }), 'regular and exhibition games are not postseason');
+  assert(!isPostseason({ roundCode: 'kbo_p' }), 'the 5th-place tiebreaker is not postseason');
   assert(
     leagueLastDate([ps('a', '2026-10-31', 'LG', 'HH', '잠실'), { ...ps('b', '2026-11-01', 'LG', 'HH', '잠실'), cancel: true }], '2026-10-20') === '2026-10-31',
     'league last date skips cancelled games',
   );
   assert(leagueLastDate([ps('a', '2026-10-31', 'LG', 'HH', '잠실')], '2026-11-01') === null, 'league last date is null after the postseason');
 
-  const bracket = [ps('wc', '2026-10-06', 'SS', 'NC', '대구'), ps('spo', '2026-10-09', 'SK', 'SS', '문학'), ps('po', '2026-10-17', 'HH', 'SK', '대전')];
+  // 2025 bracket as Naver lists it (KIA 8th).
+  const bracket = [ps('wc', '2025-10-06', 'SS', 'NC', '대구'), ps('spo', '2025-10-09', 'SK', 'SS', '문학'), ps('po', '2025-10-18', 'HH', 'SS', '대전')];
   assert(postseasonEntry(bracket).kia === 'unknown', 'four listed clubs leave a slot open (top seed waits for the Korean Series)');
-  const full = [...bracket, ps('ks', '2026-10-26', 'LG', 'HH', '잠실')];
+  const full = [...bracket, ps('ks', '2025-10-26', 'LG', 'HH', '잠실')];
   assert(postseasonEntry(full).kia === 'out', 'five listed clubs without KIA means KIA missed the postseason');
   assert(postseasonEntry(full).teams.join(',') === 'HH,LG,NC,SK,SS', 'postseason teams are listed');
-  assert(postseasonEntry([ps('ks', '2026-10-26', 'HT', 'XX', '광주')]).kia === 'in', 'KIA in any postseason game means it qualified');
+  const listed = postseasonEntry([ps('ks', '2024-10-22', 'HT', 'SS', '광주')]);
+  assert(listed.kia === 'in' && listed.listed === true, 'KIA in any postseason game means it qualified');
+  const tiebreak = [{ ...ps('tb', '2024-10-01', 'KT', 'SK', '수원'), roundCode: 'kbo_p' }, ps('wc', '2024-10-02', 'OB', 'KT', '잠실')];
+  assert(postseasonEntry(tiebreak).teams.join(',') === 'KT,OB', 'the tiebreaker loser never counts as a postseason club');
+
+  const result = (date, home, away, winner) => ({ gameDate: date, homeTeamCode: home, awayTeamCode: away, roundCode: 'kbo_r', statusCode: 'RESULT', winner, cancel: false });
+  const fromGames = standingsFromSchedule([
+    result('2026-09-01', 'HT', 'LG', 'HOME'),
+    result('2026-09-02', 'HT', 'LG', 'AWAY'),
+    result('2026-09-03', 'OB', 'HT', 'DRAW'),
+    { ...result('2026-09-04', 'OB', 'HT', 'DRAW'), statusCode: 'BEFORE', cancel: true },
+    { ...result('2026-03-14', 'OB', 'HT', 'HOME'), roundCode: 'kbo_e' },
+  ]);
+  const kiaRow = fromGames.find((r) => r.code === 'HT');
+  assert(kiaRow.games === 3 && kiaRow.wins === 1 && kiaRow.losses === 1 && kiaRow.draws === 1, 'standings count finished regular games only');
+  const row = (code, games, wins, losses) => ({ code, games, wins, losses, draws: games - wins - losses });
+  const table = (kia) => [row('KT', 144, 85, 59), row('SS', 144, 80, 64), row('LG', 144, 78, 66), row('OB', 144, 75, 69), row('NC', 140, 72, 68), kia, row('LT', 144, 60, 84), row('SK', 144, 58, 86), row('HH', 144, 55, 89), row('WO', 144, 50, 94)];
+  assert(standingsEntry(table(row('HT', 140, 65, 75))) === 'out', 'KIA eliminated once its best case is below five clubs’ worst case');
+  assert(standingsEntry(table(row('HT', 140, 70, 70))) === 'unknown', 'KIA still alive while it can reach 5th');
+  assert(standingsEntry(table(row('HT', 144, 76, 68))) === 'in', 'KIA finishing 4th is in');
+  assert(standingsEntry([row('HT', 0, 0, 0)]) === 'unknown', 'standings need all ten clubs');
+  // 2026-09-30 (matches the KBO official table): KIA 4th, 72-60-2 with 10 left.
+  const sep30 = [row('KT', 136, 83, 49), row('SS', 135, 80, 52), row('LG', 135, 75, 59), row('HT', 134, 72, 60), row('OB', 137, 69, 63), row('NC', 136, 62, 72), row('LT', 135, 61, 72), row('SK', 136, 60, 71), row('HH', 137, 55, 78), row('WO', 139, 47, 88)];
+  assert(standingsEntry(sep30) === 'in', 'KIA 4th at 72-60 with 10 left has clinched a top-5 finish');
   assert(
     postseasonEntry([{ ...ps('r', '2026-09-30', 'LG', 'HH', '잠실'), roundCode: 'kbo_r' }, ...bracket.slice(0, 1)]).teams.join(',') === 'NC,SS',
     'regular-season games never count toward the postseason field',
@@ -704,7 +783,11 @@ async function main() {
   }
   const seoul = result.games.filter((game) => game.host);
   if (result.meta.postseason) {
-    console.log(`postseason entry: KIA ${result.meta.postseason.kia} [${result.meta.postseason.teams.join(', ')}]`);
+    const kia = result.standings?.find((row) => row.code === 'HT');
+    console.log(
+      `postseason entry: KIA ${result.meta.postseason.kia} (listed=${result.meta.postseason.listed}, bracket [${result.meta.postseason.teams.join(', ')}]` +
+        (kia ? `, KIA ${kia.wins}-${kia.losses}-${kia.draws} in ${kia.games})` : ')'),
+    );
   }
   console.log(
     `${dryRun ? 'dry-run ' : ''}${result.unchanged ? 'unchanged' : 'synced'} ${result.games.length} remaining games (${seoul.length} Seoul away), TBD ${result.tbd.length}, KIA rows ${result.kiaCount} [${result.today} → ${result.window.toDate}]`,

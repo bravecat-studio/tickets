@@ -53,7 +53,7 @@ export interface ScheduleMeta {
   /** 리그 전체 마지막 잔여 경기일(포스트시즌 포함). 시즌 종료 판단에 씁니다. */
   leagueLastDate?: string | null;
   /** 포스트시즌 경기 명단 기준 KIA 진출 여부. */
-  postseason?: { kia: 'in' | 'out' | 'unknown'; teams: string[] };
+  postseason?: { kia: 'in' | 'out' | 'unknown'; listed: boolean; teams: string[] };
 }
 
 /**
