@@ -37,6 +37,8 @@ export interface SeasonState {
   status: 'active' | 'ended';
   season: number;
   manual: boolean;
+  /** 종료 사유: 포스트시즌 미진출 / 시즌(포스트시즌 포함) 종료 / 수동. */
+  reason?: 'no-postseason' | 'season-over' | 'manual';
   updatedAt: string;
 }
 
@@ -50,6 +52,8 @@ export interface ScheduleMeta {
   tbdCount: number;
   /** 리그 전체 마지막 잔여 경기일(포스트시즌 포함). 시즌 종료 판단에 씁니다. */
   leagueLastDate?: string | null;
+  /** 포스트시즌 경기 명단 기준 KIA 진출 여부. */
+  postseason?: { kia: 'in' | 'out' | 'unknown'; teams: string[] };
 }
 
 /**

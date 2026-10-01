@@ -149,6 +149,27 @@ export function isPostseason(raw) {
   return [raw.roundName, raw.seriesName, raw.gameRound, raw.title].some((v) => POSTSEASON_WORDS.test(String(v ?? '')));
 }
 
+/** KBO postseason field since 2015: 1st~5th place (wildcard 4 vs 5). */
+export const POSTSEASON_TEAM_COUNT = 5;
+
+/**
+ * KIA's postseason entry from the postseason games Naver lists (any round,
+ * played or upcoming, cancelled included — a rainout keeps its teams).
+ * - `in`: KIA appears in a postseason game.
+ * - `out`: 5+ other clubs are listed, so every slot is taken without KIA.
+ * - `unknown`: bracket not filled in yet.
+ */
+export function postseasonEntry(rawGames) {
+  const teams = new Set();
+  for (const raw of rawGames) {
+    if (!isPostseason(raw)) continue;
+    for (const code of [raw.homeTeamCode, raw.awayTeamCode]) if (TEAMS[code]) teams.add(code);
+  }
+  const others = [...teams].filter((code) => code !== KIA);
+  const kia = teams.has(KIA) ? 'in' : others.length >= POSTSEASON_TEAM_COUNT ? 'out' : 'unknown';
+  return { kia, teams: [...teams].sort() };
+}
+
 /** Last scheduled (not cancelled) league game on or after today, any team. Null once the postseason is over. */
 export function leagueLastDate(rawGames, today) {
   const dates = rawGames
@@ -423,10 +444,12 @@ export async function syncGames({ now = new Date(), dryRun = false, allowEmpty =
   }
   const prevMeta = loadJson(META_PATH, {});
   const lastLeague = leagueLastDate(raw, today);
+  const postseason = postseasonEntry(raw);
   const unchanged =
     formatJson(games) === formatJson(prev) &&
     formatJson(tbd) === formatJson(prevTbd) &&
-    (prevMeta.leagueLastDate ?? null) === lastLeague;
+    (prevMeta.leagueLastDate ?? null) === lastLeague &&
+    formatJson(prevMeta.postseason ?? null) === formatJson(postseason);
   const meta = unchanged
     ? prevMeta
     : {
@@ -438,6 +461,7 @@ export async function syncGames({ now = new Date(), dryRun = false, allowEmpty =
         gameCount: games.length,
         tbdCount: tbd.length,
         leagueLastDate: lastLeague,
+        postseason,
       };
   if (!unchanged) writeSchedule({ games, tbd, meta, dryRun });
   return { games, tbd, meta, kiaCount, today, window, unchanged };
@@ -649,6 +673,18 @@ export function runSelfTest() {
   );
   assert(leagueLastDate([ps('a', '2026-10-31', 'LG', 'HH', '잠실')], '2026-11-01') === null, 'league last date is null after the postseason');
 
+  const bracket = [ps('wc', '2026-10-06', 'SS', 'NC', '대구'), ps('spo', '2026-10-09', 'SK', 'SS', '문학'), ps('po', '2026-10-17', 'HH', 'SK', '대전')];
+  assert(postseasonEntry(bracket).kia === 'unknown', 'four listed clubs leave a slot open (top seed waits for the Korean Series)');
+  const full = [...bracket, ps('ks', '2026-10-26', 'LG', 'HH', '잠실')];
+  assert(postseasonEntry(full).kia === 'out', 'five listed clubs without KIA means KIA missed the postseason');
+  assert(postseasonEntry(full).teams.join(',') === 'HH,LG,NC,SK,SS', 'postseason teams are listed');
+  assert(postseasonEntry([ps('ks', '2026-10-26', 'HT', 'XX', '광주')]).kia === 'in', 'KIA in any postseason game means it qualified');
+  assert(
+    postseasonEntry([{ ...ps('r', '2026-09-30', 'LG', 'HH', '잠실'), roundCode: 'kbo_r' }, ...bracket.slice(0, 1)]).teams.join(',') === 'NC,SS',
+    'regular-season games never count toward the postseason field',
+  );
+  assert(postseasonEntry([{ ...ps('wc', '2026-10-06', 'SS', 'NC', '대구'), cancel: true }]).teams.length === 2, 'a rained-out postseason game keeps its teams');
+
   assert(formatJson([{ a: 1 }]) === '[\n  {\n    "a": 1\n  }\n]\n', 'JSON formatting stays stable');
   console.log('sync-games self-test ok');
 }
@@ -667,6 +703,9 @@ async function main() {
     return 0;
   }
   const seoul = result.games.filter((game) => game.host);
+  if (result.meta.postseason) {
+    console.log(`postseason entry: KIA ${result.meta.postseason.kia} [${result.meta.postseason.teams.join(', ')}]`);
+  }
   console.log(
     `${dryRun ? 'dry-run ' : ''}${result.unchanged ? 'unchanged' : 'synced'} ${result.games.length} remaining games (${seoul.length} Seoul away), TBD ${result.tbd.length}, KIA rows ${result.kiaCount} [${result.today} → ${result.window.toDate}]`,
   );

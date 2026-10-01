@@ -218,7 +218,11 @@ export default function App() {
 
       {SEASON.status === 'ended' && (
         <aside className="notice">
-          <strong>{SEASON.season} 시즌 일정이 끝났습니다.</strong>
+          <strong>
+            {SEASON.reason === 'no-postseason'
+              ? `KIA가 ${SEASON.season} 포스트시즌에 진출하지 못해 시즌 일정을 마쳤습니다.`
+              : `${SEASON.season} 시즌 일정이 끝났습니다.`}
+          </strong>
           비시즌에는 문자 알림·일정 자동 갱신을 모두 멈춥니다. 3월 1일부터 다음 시즌 KBO 일정을 확인해 자동으로 다시 시작합니다.
         </aside>
       )}

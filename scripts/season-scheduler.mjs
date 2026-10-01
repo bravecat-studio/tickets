@@ -2,9 +2,14 @@
 /**
  * Start/stop every scheduled GitHub Actions workflow with the KBO season.
  *
- * - Season end: no remaining KIA games and no remaining league games (the
- *   postseason is over, so KIA can no longer be drawn into a series) for
- *   END_GRACE_DAYS (a rained-out finale can still get a makeup date) → season.json `ended`,
+ * - Season end: no remaining KIA games and
+ *   - KIA is not in the postseason field (schedule-meta.json `postseason.kia`
+ *     is `out`: five other clubs are listed) → ends right away, or
+ *   - KIA's postseason run / the season is over: no remaining KIA games for
+ *     END_GRACE_DAYS (a rainout can still get a makeup date; rounds have gaps).
+ *     While KIA's entry is still `unknown` it waits for the league's last game
+ *     (a top seed waits ~3 weeks for the Korean Series).
+ *   → season.json `ended`,
  *   `sms-reminder` and `update-schedule` are disabled. Only `season-scheduler`
  *   stays enabled, and its cron fires on a few fixed dates only.
  * - Off-season: no schedule lookups. Two keepalive runs (11/15, 1/10) re-enable
@@ -61,7 +66,7 @@ export function remainingKiaDates(games, today) {
  * Reconcile season state with the remaining KIA schedule.
  * Returns the next state and an action label; `state` is never mutated.
  */
-export function decideSeason(state, { remainingDates, today, leagueLastDate = null, now = new Date() }) {
+export function decideSeason(state, { remainingDates, today, leagueLastDate = null, postseason = null, now = new Date() }) {
   const nextYear = remainingDates.length > 0 ? Number(remainingDates[0].slice(0, 4)) : null;
   const stamp = now.toISOString();
 
@@ -82,7 +87,15 @@ export function decideSeason(state, { remainingDates, today, leagueLastDate = nu
   }
 
   if (state.status === 'ended') return { state, action: 'already-ended' };
-  if (leagueLastDate && leagueLastDate >= today) {
+  const season = state.season ?? Number(today.slice(0, 4));
+  const kiaEntry = postseason?.kia ?? 'unknown';
+  if (kiaEntry === 'out') {
+    return {
+      state: { status: 'ended', season, manual: false, reason: 'no-postseason', updatedAt: stamp },
+      action: 'auto-end-no-postseason',
+    };
+  }
+  if (kiaEntry === 'unknown' && leagueLastDate && leagueLastDate >= today) {
     // Postseason still running: KIA may yet be drawn in (e.g. a top seed waits ~3 weeks for the Korean Series).
     if (!state.noGamesSince) return { state, action: 'postseason-wait' };
     const next = { ...state, updatedAt: stamp };
@@ -94,7 +107,7 @@ export function decideSeason(state, { remainingDates, today, leagueLastDate = nu
   }
   if (daysBetween(state.noGamesSince, today) < END_GRACE_DAYS) return { state, action: 'end-pending' };
   return {
-    state: { status: 'ended', season: state.season ?? Number(today.slice(0, 4)), manual: false, updatedAt: stamp },
+    state: { status: 'ended', season, manual: false, reason: 'season-over', updatedAt: stamp },
     action: 'auto-end',
   };
 }
@@ -105,7 +118,7 @@ export function applyManualSeason(state, action, { today, now = new Date() }) {
     return { status: 'active', season: Number(today.slice(0, 4)), manual: false, updatedAt: stamp };
   }
   if (action === 'end') {
-    return { status: 'ended', season: state.season ?? Number(today.slice(0, 4)), manual: true, updatedAt: stamp };
+    return { status: 'ended', season: state.season ?? Number(today.slice(0, 4)), manual: true, reason: 'manual', updatedAt: stamp };
   }
   throw new Error(`invalid season action: ${action}`);
 }
@@ -200,10 +213,16 @@ function autoSeason(env = process.env) {
   const games = loadJson(GAMES_PATH, []);
   const meta = loadJson(META_PATH, {});
   const remainingDates = remainingKiaDates(games, today);
-  const result = decideSeason(state, { remainingDates, today, leagueLastDate: meta.leagueLastDate ?? null, now });
+  const result = decideSeason(state, {
+    remainingDates,
+    today,
+    leagueLastDate: meta.leagueLastDate ?? null,
+    postseason: meta.postseason ?? null,
+    now,
+  });
   const saved = saveState(state, result.state, env);
   console.log(
-    `season ${result.action} (status=${result.state.status}, season=${result.state.season}, remainingKia=${remainingDates.length}${changeNote(saved, env)})`,
+    `season ${result.action} (status=${result.state.status}, season=${result.state.season}, remainingKia=${remainingDates.length}, kiaPostseason=${meta.postseason?.kia ?? 'unknown'}${changeNote(saved, env)})`,
   );
   writeGithubOutput(
     { action: result.action, changed: String(saved.written), status: result.state.status, remaining: String(remainingDates.length) },
@@ -237,6 +256,27 @@ export function runSelfTest() {
     { remainingDates: [], today: '2026-10-05', leagueLastDate: '2026-10-31', now },
   );
   assert(waitClears.state.noGamesSince === undefined, 'listed postseason games reset the end grace period');
+  const out = decideSeason(
+    { ...active, noGamesSince: '2026-10-04' },
+    { remainingDates: [], today: '2026-10-05', leagueLastDate: '2026-10-31', postseason: { kia: 'out' }, now },
+  );
+  assert(out.action === 'auto-end-no-postseason' && out.state.status === 'ended', 'missing the postseason ends the season right away');
+  assert(out.state.reason === 'no-postseason' && out.state.noGamesSince === undefined, 'early end records why');
+  const stillPlaying = decideSeason(active, {
+    remainingDates: ['2026-10-30'],
+    today: '2026-10-05',
+    postseason: { kia: 'out' },
+    now,
+  });
+  assert(stillPlaying.action === 'unchanged', 'remaining KIA games always keep the season on');
+  const knockedOut = decideSeason(active, {
+    remainingDates: [],
+    today: '2026-10-12',
+    leagueLastDate: '2026-10-31',
+    postseason: { kia: 'in' },
+    now,
+  });
+  assert(knockedOut.action === 'end-pending', 'after KIA is knocked out the grace period runs without waiting for the Korean Series');
   const pending = decideSeason(active, { remainingDates: [], today: '2026-10-20', leagueLastDate: '2026-10-19', now });
   assert(pending.action === 'end-pending' && pending.state.status === 'active', 'first empty day only starts the grace period');
   assert(pending.state.noGamesSince === '2026-10-20', 'grace period start is recorded');
@@ -247,6 +287,7 @@ export function runSelfTest() {
   const end = decideSeason(pending.state, { remainingDates: [], today: '2026-10-27', now });
   assert(end.action === 'auto-end' && end.state.status === 'ended', `no remaining KIA games for ${END_GRACE_DAYS} days ends the season`);
   assert(end.state.season === 2026 && end.state.manual === false, 'auto end keeps the season year');
+  assert(end.state.reason === 'season-over', 'normal end records season-over');
   assert(end.state.noGamesSince === undefined, 'ended state drops the grace marker');
 
   const again = decideSeason(end.state, { remainingDates: [], today: '2026-12-01', now });
