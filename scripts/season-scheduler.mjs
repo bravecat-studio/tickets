@@ -2,8 +2,9 @@
 /**
  * Start/stop every scheduled GitHub Actions workflow with the KBO season.
  *
- * - Season end: `update-schedule` sees no remaining KIA games for END_GRACE_DAYS
- *   (a rained-out finale can still get a makeup date) → season.json `ended`,
+ * - Season end: no remaining KIA games and no remaining league games (the
+ *   postseason is over, so KIA can no longer be drawn into a series) for
+ *   END_GRACE_DAYS (a rained-out finale can still get a makeup date) → season.json `ended`,
  *   `sms-reminder` and `update-schedule` are disabled. Only `season-scheduler`
  *   stays enabled, and its cron fires on a few fixed dates only.
  * - Off-season: no schedule lookups. Two keepalive runs (11/15, 1/10) re-enable
@@ -23,6 +24,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const SEASON_PATH = join(ROOT, 'client/src/data/season.json');
 const GAMES_PATH = join(ROOT, 'client/src/data/games.json');
+const META_PATH = join(ROOT, 'client/src/data/schedule-meta.json');
 const GITHUB_API = 'https://api.github.com';
 
 /** Workflows that run only during the season. */
@@ -59,7 +61,7 @@ export function remainingKiaDates(games, today) {
  * Reconcile season state with the remaining KIA schedule.
  * Returns the next state and an action label; `state` is never mutated.
  */
-export function decideSeason(state, { remainingDates, today, now = new Date() }) {
+export function decideSeason(state, { remainingDates, today, leagueLastDate = null, now = new Date() }) {
   const nextYear = remainingDates.length > 0 ? Number(remainingDates[0].slice(0, 4)) : null;
   const stamp = now.toISOString();
 
@@ -80,6 +82,13 @@ export function decideSeason(state, { remainingDates, today, now = new Date() })
   }
 
   if (state.status === 'ended') return { state, action: 'already-ended' };
+  if (leagueLastDate && leagueLastDate >= today) {
+    // Postseason still running: KIA may yet be drawn in (e.g. a top seed waits ~3 weeks for the Korean Series).
+    if (!state.noGamesSince) return { state, action: 'postseason-wait' };
+    const next = { ...state, updatedAt: stamp };
+    delete next.noGamesSince;
+    return { state: next, action: 'postseason-wait' };
+  }
   if (!state.noGamesSince) {
     return { state: { ...state, noGamesSince: today, updatedAt: stamp }, action: 'end-pending' };
   }
@@ -189,8 +198,9 @@ function autoSeason(env = process.env) {
   const today = kstYmd(now);
   const state = loadJson(SEASON_PATH, { status: 'active' });
   const games = loadJson(GAMES_PATH, []);
+  const meta = loadJson(META_PATH, {});
   const remainingDates = remainingKiaDates(games, today);
-  const result = decideSeason(state, { remainingDates, today, now });
+  const result = decideSeason(state, { remainingDates, today, leagueLastDate: meta.leagueLastDate ?? null, now });
   const saved = saveState(state, result.state, env);
   console.log(
     `season ${result.action} (status=${result.state.status}, season=${result.state.season}, remainingKia=${remainingDates.length}${changeNote(saved, env)})`,
@@ -220,7 +230,14 @@ export function runSelfTest() {
   const keep = decideSeason(active, { remainingDates: ['2026-10-21'], today: '2026-10-20', now });
   assert(keep.action === 'unchanged' && keep.state === active, 'active season with games stays active');
 
-  const pending = decideSeason(active, { remainingDates: [], today: '2026-10-20', now });
+  const waitKs = decideSeason(active, { remainingDates: [], today: '2026-10-05', leagueLastDate: '2026-10-31', now });
+  assert(waitKs.action === 'postseason-wait' && waitKs.state === active, 'season stays on while the league postseason runs');
+  const waitClears = decideSeason(
+    { ...active, noGamesSince: '2026-10-01' },
+    { remainingDates: [], today: '2026-10-05', leagueLastDate: '2026-10-31', now },
+  );
+  assert(waitClears.state.noGamesSince === undefined, 'listed postseason games reset the end grace period');
+  const pending = decideSeason(active, { remainingDates: [], today: '2026-10-20', leagueLastDate: '2026-10-19', now });
   assert(pending.action === 'end-pending' && pending.state.status === 'active', 'first empty day only starts the grace period');
   assert(pending.state.noGamesSince === '2026-10-20', 'grace period start is recorded');
   const waiting = decideSeason(pending.state, { remainingDates: [], today: '2026-10-26', now });

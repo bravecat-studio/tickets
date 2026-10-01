@@ -11,7 +11,10 @@
     "appUrl": "https://play.google.com/store/apps/details?id=com.interpark.ticket",
     "loginUrl": "https://nol.interpark.com/ticket",
     "awayCheering": "3루",
-    "onlineClose": { "mode": "hoursBeforeStart", "hours": 2 },
+    "onlineClose": {
+      "mode": "hoursBeforeStart",
+      "hours": 2
+    },
     "policies": [
       {
         "kind": "season",
@@ -64,7 +67,10 @@
     "appUrl": "https://play.google.com/store/apps/details?id=kr.co.ticketlink.cne&pcampaignid=web_share",
     "loginUrl": "https://www.ticketlink.co.kr/auth/login",
     "awayCheering": "3루",
-    "onlineClose": { "mode": "hoursAfterStart", "hours": 1 },
+    "onlineClose": {
+      "mode": "hoursAfterStart",
+      "hours": 1
+    },
     "policies": [
       {
         "kind": "season",
@@ -107,7 +113,10 @@
     "appUrl": "https://play.google.com/store/apps/details?id=com.interpark.ticket",
     "loginUrl": "https://nol.interpark.com/ticket",
     "awayCheering": "1루",
-    "onlineClose": { "mode": "hoursAfterStart", "hours": 1 },
+    "onlineClose": {
+      "mode": "hoursAfterStart",
+      "hours": 1
+    },
     "policies": [
       {
         "kind": "early",
@@ -135,6 +144,43 @@
       "일반예매: 경기 7일 전 11:00. 베어스클럽 선예매는 같은 날 10:00.",
       "예매는 경기 시작 1시간 후까지, 취소는 시작 4시간 전까지.",
       "KIA 원정 응원석은 1루입니다. 3루는 두산 홈 응원 구역입니다."
+    ]
+  },
+  "postseason": {
+    "id": "postseason",
+    "name": "KBO 포스트시즌",
+    "short": "포스트시즌",
+    "stadium": "잠실·고척",
+    "vendor": "NOL 티켓 (단독)",
+    "ticketUrl": "https://nol.interpark.com/ticket",
+    "clubTicketUrl": "https://www.koreabaseball.com/MediaNews/Notice/List.aspx",
+    "clubScheduleUrl": "https://www.koreabaseball.com/Schedule/Schedule.aspx",
+    "appUrl": "https://play.google.com/store/apps/details?id=com.interpark.ticket",
+    "loginUrl": "https://nol.interpark.com/ticket",
+    "awayCheering": "홈 구단 반대편",
+    "onlineClose": {
+      "mode": "hoursBeforeStart",
+      "hours": 2
+    },
+    "policies": [
+      {
+        "kind": "general",
+        "label": "포스트시즌 예매 (예상)",
+        "when": "시리즈 1차전 D-1 (KBO 공지 우선)",
+        "openClock": "14:00",
+        "daysBefore": 1,
+        "maxTickets": 4,
+        "channel": "NOL 티켓 웹·앱 (단독)",
+        "eligible": "회원 누구나",
+        "estimated": true
+      }
+    ],
+    "rules": [
+      "포스트시즌(와일드카드~한국시리즈) 입장권은 KBO가 NOL 티켓에서 단독 판매합니다. 구단 예매처·선예매는 없습니다.",
+      "오픈 시각은 대진이 확정된 뒤 KBO가 공지합니다. 2025년: 와일드카드·준플레이오프 D-1 14:00, 플레이오프 D-3 14:00, 한국시리즈 D-1 11:00(차전별 1시간 간격).",
+      "이 사이트는 시리즈 1차전 하루 전 14:00로 추정합니다. 실제 시각은 KBO 공지를 확인하세요.",
+      "1인 최대 4매. 전량 예매이며, 취소분은 경기 당일 시작 2시간 전부터 구장 현장 판매합니다.",
+      "NOL 티켓 고객센터 1544-1555."
     ]
   }
 }

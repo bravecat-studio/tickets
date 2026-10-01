@@ -137,6 +137,27 @@ export function isExhibition(raw) {
   return raw.roundCode === 'kbo_e';
 }
 
+const POSTSEASON_WORDS = /포스트시즌|와일드카드|준플레이오프|플레이오프|한국시리즈/;
+
+/**
+ * Wildcard ~ Korean Series. Naver tags regular games `kbo_r` and exhibitions
+ * `kbo_e`; any other round code (or a round name naming a postseason round) is postseason.
+ */
+export function isPostseason(raw) {
+  if (isExhibition(raw)) return false;
+  if (raw.roundCode && raw.roundCode !== 'kbo_r') return true;
+  return [raw.roundName, raw.seriesName, raw.gameRound, raw.title].some((v) => POSTSEASON_WORDS.test(String(v ?? '')));
+}
+
+/** Last scheduled (not cancelled) league game on or after today, any team. Null once the postseason is over. */
+export function leagueLastDate(rawGames, today) {
+  const dates = rawGames
+    .filter((raw) => !isExhibition(raw) && !isCancelled(raw) && raw.gameDate >= today)
+    .map((raw) => raw.gameDate)
+    .sort();
+  return dates.length > 0 ? dates[dates.length - 1] : null;
+}
+
 export function opponentOf(raw) {
   const code = raw.homeTeamCode === KIA ? raw.awayTeamCode : raw.homeTeamCode;
   const team = TEAMS[code];
@@ -161,7 +182,13 @@ export function mapNaverGame(raw) {
     series: '',
   };
   if (raw.timeTbd) game.note = '시작 시각 미정';
-  if (venue === 'away' && opponent.host && isSeoulStadium(stadium)) game.host = opponent.host;
+  if (isPostseason(raw)) {
+    // KBO sells every postseason game itself (NOL 티켓 단독), whoever the opponent is.
+    game.stage = 'postseason';
+    if (venue === 'away' && isSeoulStadium(stadium)) game.host = 'postseason';
+  } else if (venue === 'away' && opponent.host && isSeoulStadium(stadium)) {
+    game.host = opponent.host;
+  }
   return game;
 }
 
@@ -177,6 +204,7 @@ export function assignSeries(games) {
     let j = i + 1;
     while (
       j < labeled.length &&
+      labeled[j].stage === labeled[i].stage &&
       labeled[j].opponentShort === labeled[i].opponentShort &&
       labeled[j].venue === labeled[i].venue &&
       labeled[j].stadium === labeled[i].stadium &&
@@ -185,6 +213,18 @@ export function assignSeries(games) {
       j += 1;
     }
     const count = j - i;
+    if (labeled[i].stage === 'postseason') {
+      // One postseason series vs the same opponent; KBO opens its tickets together
+      // before the first game, so sale estimates key off that date.
+      let k = j;
+      while (k < labeled.length && labeled[k].stage === 'postseason' && labeled[k].opponentShort === labeled[i].opponentShort) k += 1;
+      for (let m = i; m < k; m += 1) {
+        labeled[m].series = `포스트시즌 vs ${labeled[i].opponentShort}`;
+        labeled[m].saleBaseDate = labeled[i].date;
+      }
+      i = k;
+      continue;
+    }
     const seoulAway = labeled[i].venue === 'away' && isSeoulStadium(labeled[i].stadium);
     const prefix = seoulAway ? '서울 원정' : labeled[i].venue === 'home' ? '홈' : '원정';
     const series = count > 1 ? `${prefix} ${count}연전` : seoulAway ? '서울 원정 · 재편성' : prefix;
@@ -270,6 +310,8 @@ export function toStoredGame(game) {
   if (game.note) stored.note = game.note;
   if (game.reserveUrl) stored.reserveUrl = game.reserveUrl;
   if (game.host) stored.host = game.host;
+  if (game.stage) stored.stage = game.stage;
+  if (game.saleBaseDate) stored.saleBaseDate = game.saleBaseDate;
   return stored;
 }
 
@@ -379,9 +421,14 @@ export async function syncGames({ now = new Date(), dryRun = false, allowEmpty =
   if (kiaCount === 0) {
     throw new Error('네이버 스포츠에서 KIA 일정을 하나도 받지 못했습니다. games.json을 덮어쓰지 않습니다.');
   }
-  const unchanged = formatJson(games) === formatJson(prev) && formatJson(tbd) === formatJson(prevTbd);
+  const prevMeta = loadJson(META_PATH, {});
+  const lastLeague = leagueLastDate(raw, today);
+  const unchanged =
+    formatJson(games) === formatJson(prev) &&
+    formatJson(tbd) === formatJson(prevTbd) &&
+    (prevMeta.leagueLastDate ?? null) === lastLeague;
   const meta = unchanged
-    ? loadJson(META_PATH, {})
+    ? prevMeta
     : {
         source: NAVER_SCHEDULE_URL,
         sourceLabel: SOURCE_LABEL,
@@ -390,6 +437,7 @@ export async function syncGames({ now = new Date(), dryRun = false, allowEmpty =
         toDate: window.toDate,
         gameCount: games.length,
         tbdCount: tbd.length,
+        leagueLastDate: lastLeague,
       };
   if (!unchanged) writeSchedule({ games, tbd, meta, dryRun });
   return { games, tbd, meta, kiaCount, today, window, unchanged };
@@ -571,6 +619,35 @@ export function runSelfTest() {
     'same-day games get a numeric suffix',
   );
   assert(doubleheader.games[0].startTime === '14:00', 'doubleheader is ordered by first pitch');
+
+  const ps = (id, date, home, away, stadium) => ({
+    gameId: id,
+    gameDate: date,
+    gameDateTime: `${date}T18:30:00`,
+    stadium,
+    homeTeamCode: home,
+    awayTeamCode: away,
+    roundCode: 'kbo_ks',
+    cancel: false,
+  });
+  const post = buildSchedule(
+    [ps('ks1', '2026-10-24', 'HT', 'LG', '광주'), ps('ks2', '2026-10-25', 'HT', 'LG', '광주'), ps('ks3', '2026-10-27', 'LG', 'HT', '잠실'), ps('ks4', '2026-10-28', 'LG', 'HT', '잠실')],
+    { today: '2026-10-20' },
+  );
+  const jamsilKs = post.games.filter((game) => game.stadium === '잠실야구장');
+  assert(jamsilKs.length === 2 && jamsilKs.every((game) => game.host === 'postseason'), 'Seoul postseason away games use the KBO postseason host');
+  assert(post.games.every((game) => game.stage === 'postseason'), 'postseason games are tagged');
+  assert(post.games.every((game) => game.saleBaseDate === '2026-10-24'), 'a postseason series keys its sale off game 1');
+  assert(post.games[0].host === undefined, 'Gwangju postseason home games are not sale targets');
+  assert(post.games[2].series === '포스트시즌 vs LG', 'postseason series label');
+  assert(!post.tbd.some((row) => row.opponent.startsWith('LG') && row.reason.includes('10/')), 'postseason games never feed the regular TBD list');
+  assert(isPostseason({ roundCode: 'kbo_r', roundName: '한국시리즈' }), 'round name fallback detects the postseason');
+  assert(!isPostseason({ roundCode: 'kbo_r' }) && !isPostseason({ roundCode: 'kbo_e' }), 'regular and exhibition games are not postseason');
+  assert(
+    leagueLastDate([ps('a', '2026-10-31', 'LG', 'HH', '잠실'), { ...ps('b', '2026-11-01', 'LG', 'HH', '잠실'), cancel: true }], '2026-10-20') === '2026-10-31',
+    'league last date skips cancelled games',
+  );
+  assert(leagueLastDate([ps('a', '2026-10-31', 'LG', 'HH', '잠실')], '2026-11-01') === null, 'league last date is null after the postseason');
 
   assert(formatJson([{ a: 1 }]) === '[\n  {\n    "a": 1\n  }\n]\n', 'JSON formatting stays stable');
   console.log('sync-games self-test ok');

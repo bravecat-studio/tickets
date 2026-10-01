@@ -9,4 +9,6 @@ export interface SalePolicy {
   maxTickets: number;
   channel: string;
   eligible: string;
+  /** 고정 정책이 아니라 과거 공지로 추정한 시각 (포스트시즌). */
+  estimated?: boolean;
 }

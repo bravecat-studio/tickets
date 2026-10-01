@@ -105,3 +105,37 @@ describe('splitDuration', () => {
     expect(splitDuration(90_610_000)).toEqual({ d: 1, h: 1, m: 10, s: 10 });
   });
 });
+
+describe('postseason', () => {
+  const ks3: Game = {
+    id: '2026-10-27-lg',
+    date: '2026-10-27',
+    startTime: '18:30',
+    opponent: 'LG 트윈스',
+    opponentShort: 'LG',
+    venue: 'away',
+    stadium: '잠실야구장',
+    series: '포스트시즌 vs LG',
+    host: 'postseason',
+    stage: 'postseason',
+    saleBaseDate: '2026-10-24',
+  };
+
+  it('estimates one NOL ticket sale at series game 1 D-1 14:00', () => {
+    const windows = saleWindowsFor(ks3);
+    expect(windows).toHaveLength(1);
+    expect(windows[0].estimated).toBe(true);
+    expect(windows[0].maxTickets).toBe(4);
+    expect(windows[0].at.toISOString()).toBe(kstDateTime('2026-10-23', '14:00').toISOString());
+  });
+
+  it('counts Seoul postseason away games as sale targets', () => {
+    expect(isSeoulAway(ks3)).toBe(true);
+    expect(bookingStatus(ks3, kstDateTime('2026-10-22', '12:00'))).toBe('upcoming');
+    expect(bookingStatus(ks3, kstDateTime('2026-10-23', '15:00'))).toBe('on_sale');
+  });
+
+  it('leaves Gwangju postseason home games out of scope', () => {
+    expect(isSeoulAway({ ...ks3, venue: 'home', stadium: '광주-기아 챔피언스필드', host: undefined })).toBe(false);
+  });
+});
