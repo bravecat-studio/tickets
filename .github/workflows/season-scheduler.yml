@@ -1,19 +1,25 @@
 name: season-scheduler
 
+# Off-season only. Enabled when update-schedule declares the season over and
+# disabled again by itself once the next season starts. No daily off-season runs:
+#   - 3/1~4/30 09:50 KST: sync the KBO schedule; the first run that finds KIA
+#     games starts the season (KBO publishes it mid-Dec~early Jan, opens late March).
+#   - 11/15, 1/10 09:50 KST: keepalive only (no lookup) so GitHub's 60-day
+#     inactivity rule for public repos cannot disable this workflow.
+# GitHub cron is UTC.
 on:
   schedule:
-    # Off-season watcher: 09:50 KST daily. GitHub cron is UTC.
-    # Enabled when the season ends, disabled again once the next season starts.
-    - cron: '50 0 * * *'
+    - cron: '50 0 * 3,4 *'
+    - cron: '50 0 15 11 *'
+    - cron: '50 0 10 1 *'
   workflow_dispatch:
     inputs:
       season:
-        description: '시즌 스케줄 — auto 일정 보고 자동 판단 / start 지금 시작 / end 지금 종료'
+        description: '시즌 스케줄 — auto 일정 보고 자동 판단 / start 지금 시작'
         type: choice
         options:
           - auto
           - 'start'
-          - 'end'
         default: auto
       dry_run:
         description: '커밋·워크플로 변경 없이 로그만'
@@ -32,35 +38,38 @@ concurrency:
 
 jobs:
   season:
-    name: season ${{ github.event.inputs.season || 'auto' }}
+    name: season ${{ github.event.schedule && 'scheduled' || github.event.inputs.season }}
     runs-on: ubuntu-latest
     env:
-      SEASON_ACTION: ${{ github.event.inputs.season || 'auto' }}
+      MODE: ${{ (github.event.schedule == '50 0 15 11 *' || github.event.schedule == '50 0 10 1 *') && 'keepalive' || github.event.inputs.season || 'auto' }}
       DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
+        if: ${{ env.MODE != 'keepalive' }}
         with:
           node-version: 22
           cache: npm
       - name: Fetch KBO schedule
-        if: ${{ env.SEASON_ACTION == 'auto' }}
+        if: ${{ env.MODE == 'auto' }}
         env:
-          # Next season may not be published yet; keep games.json instead of failing.
+          # Next season may not be listed yet; keep games.json and retry tomorrow.
           SYNC_ALLOW_EMPTY: '1'
         run: node scripts/sync-games.mjs
       - name: Decide season
         id: season
+        if: ${{ env.MODE != 'keepalive' }}
         run: |
-          if [ "$SEASON_ACTION" = 'auto' ]; then
+          if [ "$MODE" = 'auto' ]; then
             node scripts/season-scheduler.mjs --auto
           else
-            node scripts/season-scheduler.mjs "$SEASON_ACTION"
+            node scripts/season-scheduler.mjs "$MODE"
           fi
       - name: Reconcile SMS scheduler with remaining games
+        if: ${{ env.MODE != 'keepalive' }}
         run: node scripts/sms-scheduler-toggle.mjs --auto-remaining
       - name: Commit season state
-        if: ${{ env.DRY_RUN != '1' }}
+        if: ${{ env.MODE != 'keepalive' && env.DRY_RUN != '1' }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -81,4 +90,8 @@ jobs:
       - name: Start/stop season workflows
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/season-scheduler.mjs --apply-workflows
+        run: |
+          node scripts/season-scheduler.mjs --apply-workflows
+          if [ "$MODE" = 'keepalive' ]; then
+            echo '비시즌 keepalive — 일정 조회 없이 season-scheduler만 다시 활성화했습니다.' >> "$GITHUB_STEP_SUMMARY"
+          fi

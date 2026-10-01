@@ -61,9 +61,9 @@ export function smsMessage(item: NextSale): string {
   });
   const ticket = ticketUrlFor(item.game);
   return [
-    `[KIA] 서울 원정 ${item.window.label} 오픈 1시간 전`,
+    `[KIA] ${item.game.stage === 'postseason' ? '포스트시즌' : '서울 원정'} ${item.window.label} 오픈 1시간 전`,
     `vs ${item.game.opponentShort} ${item.game.date} ${item.game.startTime} ${item.game.stadium}`,
-    `오픈 ${open}`,
+    item.window.estimated ? `오픈 ${open} (예상 · KBO 공지 확인, 1인 4매)` : `오픈 ${open}`,
     `공식 예매: ${ticket}`,
   ].join('\n');
 }

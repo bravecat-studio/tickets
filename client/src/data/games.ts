@@ -18,8 +18,12 @@ export interface Game {
   note?: string;
   /** Ticketlink/NOL 좌석 예매 진입 URL. 로그인 필요. */
   reserveUrl?: string;
-  /** 서울 원정 홈 구단. 있으면 예매·알람 대상입니다. */
+  /** 서울 원정 홈 구단(포스트시즌은 KBO). 있으면 예매·알람 대상입니다. */
   host?: HostId;
+  /** 와일드카드~한국시리즈. */
+  stage?: 'postseason';
+  /** 포스트시즌 시리즈 1차전 날짜. 예매 오픈 추정 기준일입니다. */
+  saleBaseDate?: string;
 }
 
 export interface SeoulAwayTbd {
@@ -33,6 +37,8 @@ export interface SeasonState {
   status: 'active' | 'ended';
   season: number;
   manual: boolean;
+  /** 종료 사유: 포스트시즌 미진출 / 시즌(포스트시즌 포함) 종료 / 수동. */
+  reason?: 'no-postseason' | 'season-over' | 'manual';
   updatedAt: string;
 }
 
@@ -44,6 +50,10 @@ export interface ScheduleMeta {
   toDate: string;
   gameCount: number;
   tbdCount: number;
+  /** 리그 전체 마지막 잔여 경기일(포스트시즌 포함). 시즌 종료 판단에 씁니다. */
+  leagueLastDate?: string | null;
+  /** 포스트시즌 경기 명단 기준 KIA 진출 여부. */
+  postseason?: { kia: 'in' | 'out' | 'unknown'; listed: boolean; teams: string[] };
 }
 
 /**

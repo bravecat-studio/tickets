@@ -9,15 +9,18 @@ export interface SaleWindow {
   at: Date;
   maxTickets: number;
   channel: string;
+  estimated?: boolean;
 }
 
 export function saleWindowsFor(game: Game): SaleWindow[] {
+  const base = game.saleBaseDate ?? game.date;
   return policiesFor(game).map((policy) => ({
     kind: policy.kind,
     label: policy.label,
-    at: kstDateTime(shiftKstDate(game.date, -policy.daysBefore), policy.openClock),
+    at: kstDateTime(shiftKstDate(base, -policy.daysBefore), policy.openClock),
     maxTickets: policy.maxTickets,
     channel: policy.channel,
+    ...(policy.estimated ? { estimated: true } : {}),
   }));
 }
 

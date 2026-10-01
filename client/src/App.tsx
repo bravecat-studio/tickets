@@ -218,8 +218,12 @@ export default function App() {
 
       {SEASON.status === 'ended' && (
         <aside className="notice">
-          <strong>{SEASON.season} 시즌 일정이 끝났습니다.</strong>
-          문자 알림·일정 자동 갱신 스케줄을 멈췄습니다. 다음 시즌 KBO 일정이 공개되면 자동으로 다시 시작합니다.
+          <strong>
+            {SEASON.reason === 'no-postseason'
+              ? `KIA가 ${SEASON.season} 포스트시즌에 진출하지 못해 시즌 일정을 마쳤습니다.`
+              : `${SEASON.season} 시즌 일정이 끝났습니다.`}
+          </strong>
+          비시즌에는 문자 알림·일정 자동 갱신을 모두 멈춥니다. 3월 1일부터 다음 시즌 KBO 일정을 확인해 자동으로 다시 시작합니다.
         </aside>
       )}
 
@@ -228,12 +232,15 @@ export default function App() {
           <>
             <p className="hero__label">{opened ? '오픈됨' : '다음 오픈'}</p>
             <h2>
-              {target.window.label} · 서울 원정 vs {target.game.opponentShort}
+              {target.window.label} · {target.game.stage === 'postseason' ? '' : '서울 원정 '}vs{' '}
+              {target.game.opponentShort}
             </h2>
             <p className="hero__meta">
               경기 {formatKstDate(target.game.date)} {target.game.startTime} · {target.game.stadium}
               <br />
-              오픈 {formatKstDateTime(target.window.at)} · {target.window.channel} · 최대 {target.window.maxTickets}매
+              오픈 {formatKstDateTime(target.window.at)}
+              {target.window.estimated && ' (예상 · KBO 공지 확인)'} · {target.window.channel} · 최대{' '}
+              {target.window.maxTickets}매
               {host && (
                 <>
                   <br />
@@ -269,7 +276,7 @@ export default function App() {
               </a>
               {host && (
                 <a className="btn" href={host.clubTicketUrl} target="_blank" rel="noreferrer">
-                  {host.short} 구단 티켓 안내
+                  {host.id === 'postseason' ? 'KBO 예매 공지' : `${host.short} 구단 티켓 안내`}
                 </a>
               )}
               <button
@@ -502,7 +509,10 @@ export default function App() {
                       {row.vendor}
                     </a>
                   </td>
-                  <td>{row.generalOpen}</td>
+                  <td>
+                    {row.generalOpen}
+                    {row.estimated && ' · 예상'}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -582,7 +592,7 @@ export default function App() {
       <section className="panel">
         <h3>{host?.stadium ?? '고척스카이돔'} 좌석·요금 참고</h3>
         <p className="hint">{seatTips.join(' ')}</p>
-        <div className="seats">
+        <div className="seats" hidden={seats.length === 0}>
           {seats.map((seat) => (
             <div key={seat.name} className="seat">
               <div>

@@ -1,7 +1,7 @@
 import hosts from './hosts.json';
 import type { SalePolicy } from './policy';
 
-export type HostId = 'kiwoom' | 'lg' | 'doosan';
+export type HostId = 'kiwoom' | 'lg' | 'doosan' | 'postseason';
 
 export interface OnlineClose {
   mode: 'hoursBeforeStart' | 'hoursAfterStart';
@@ -71,6 +71,7 @@ export function ticketUrlFor(game: HostableGame): string {
 export const SEOUL_HOST_SUMMARY = (Object.values(HOSTS) as HostClub[]).map((host) => {
   const general = host.policies.find((p) => p.kind === 'general');
   return {
+    estimated: Boolean(general?.estimated),
     id: host.id,
     name: host.short,
     stadium: host.stadium,

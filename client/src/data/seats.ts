@@ -42,9 +42,15 @@ export const HOST_SEATS: Record<HostId, SeatGrade[]> = {
     ...seat,
     note: seat.name.includes('오렌지') ? '잠실 내야 · 두산전은 3루가 홈 응원' : seat.note,
   })),
+  // 포스트시즌 요금은 라운드·구장마다 KBO가 따로 공지합니다.
+  postseason: [],
 };
 
 export const SEAT_TIPS: Record<HostId, readonly string[]> = {
+  postseason: [
+    '포스트시즌 요금·좌석 구분은 라운드와 구장마다 KBO가 예매 공지에서 따로 발표합니다.',
+    '1인 최대 4매, NOL 티켓 단독 판매입니다. 정규시즌 요금표와 다릅니다.',
+  ],
   kiwoom: [
     '고척 원정 응원은 3루, 키움 홈 응원은 1루입니다.',
     '표시 요금은 하절기(5/19~9/6) 일반가입니다. 화·수·목은 주중, 금·토·일·공휴일은 주말입니다.',

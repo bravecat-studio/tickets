@@ -78,10 +78,12 @@ export function remainingSeoulAway(games, today) {
 function saleWindowsFor(game) {
   const host = hostFor(game);
   if (!host) return [];
+  const base = game.saleBaseDate ?? game.date;
   return host.policies.map((policy) => ({
     kind: policy.kind,
     label: policy.label,
-    at: kstDateTime(shiftKstDate(game.date, -policy.daysBefore), policy.openClock),
+    estimated: policy.estimated === true,
+    at: kstDateTime(shiftKstDate(base, -policy.daysBefore), policy.openClock),
     ticketUrl: game.reserveUrl || host.ticketUrl,
     appUrl: host.appUrl,
   }));
@@ -113,9 +115,9 @@ function formatOpen(at) {
 
 function buildMessage(item) {
   return [
-    `[KIA] 서울 원정 ${item.label} 오픈 1시간 전`,
+    `[KIA] ${item.game.stage === 'postseason' ? '포스트시즌' : '서울 원정'} ${item.label} 오픈 1시간 전`,
     `vs ${item.game.opponentShort} ${item.game.date} ${item.game.startTime} ${item.game.stadium}`,
-    `오픈 ${formatOpen(item.at)}`,
+    item.estimated ? `오픈 ${formatOpen(item.at)} (예상 · KBO 공지 확인, 1인 4매)` : `오픈 ${formatOpen(item.at)}`,
     `공식 예매: ${item.ticketUrl}`,
     `앱: ${item.appUrl}`,
   ].join('\n');
@@ -663,6 +665,18 @@ export function runSelfTest() {
   if (remainingSeoulAway(games, '2026-08-16').some((game) => game.venue === 'home' || game.stadium.includes('창원'))) {
     throw new Error('self-test failed: home and non-Seoul away games must not count as remaining SMS targets');
   }
+
+  const postseason = [
+    { id: 'ks-3', date: '2026-10-27', startTime: '18:30', opponentShort: 'LG', venue: 'away', stadium: '잠실야구장', host: 'postseason', stage: 'postseason', saleBaseDate: '2026-10-24' },
+    { id: 'ks-4', date: '2026-10-28', startTime: '18:30', opponentShort: 'LG', venue: 'away', stadium: '잠실야구장', host: 'postseason', stage: 'postseason', saleBaseDate: '2026-10-24' },
+    { id: 'ks-1', date: '2026-10-24', startTime: '14:00', opponentShort: 'LG', venue: 'home', stadium: '광주-기아 챔피언스필드', stage: 'postseason', saleBaseDate: '2026-10-24' },
+  ];
+  const psDue = dueSales(postseason, config, kstDateTime('2026-10-23', '13:05'));
+  assert(psDue.map((d) => d.game.id).join(',') === 'ks-3,ks-4', 'Seoul postseason games remind 1h before the series sale (game 1 D-1 14:00)');
+  assert(psDue.every((d) => d.ticketUrl === HOSTS.postseason.ticketUrl), 'postseason reminders link NOL ticket');
+  const psText = buildMessage(psDue[0]);
+  assert(psText.includes('[KIA] 포스트시즌') && psText.includes('예상'), 'postseason SMS says the open time is an estimate');
+  assert(remainingSeoulAway(postseason, '2026-10-20').length === 2, 'Seoul postseason away games keep the SMS scheduler on');
 
   const ipBlock = classifySolapiError(
     403,
