@@ -11,7 +11,7 @@
 - NOL 스포츠: https://tickets.interpark.com/contents/sports
 - KIA 경기 일정: https://tigers.co.kr/game/schedule
 
-배포 주소(GitHub Pages 활성화 후): https://bravecat-studio.github.io/tickets/
+배포 주소: https://ticket.bravecat.studio/ (GitHub Pages 커스텀 도메인, `CNAME`)
 
 ## 무엇을 하나요
 
@@ -28,7 +28,7 @@
 
 ## GitHub Pages
 
-권장: 저장소 Settings → Pages → **GitHub Actions** 를 소스로 선택합니다. `main`에 푸시하거나 Actions에서 `github-pages` 워크플로를 실행하면 `/tickets/` 로 배포됩니다 (`BASE_PATH=/tickets/`).
+권장: 저장소 Settings → Pages → **GitHub Actions** 를 소스로 선택합니다. `main`에 푸시하거나 Actions에서 `github-pages` 워크플로를 실행하면 커스텀 도메인 루트(https://ticket.bravecat.studio/)로 배포됩니다 (`BASE_PATH=/`). 도메인은 저장소 루트와 `client/public/` 의 `CNAME` 파일로 지정합니다.
 
 소스가 **Deploy from a branch** (`main` `/`) 로 남아 있으면 Jekyll이 README를 홈으로 렌더링합니다. 그 경우를 대비해 저장소 루트의 `index.html`·`assets/` 이 앱 빌드 결과입니다. `main`에 푸시하면 `github-pages`가 어긋난 폴백을 자동으로 맞춥니다. 로컬에서 미리 맞추려면:
 

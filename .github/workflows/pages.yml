@@ -29,7 +29,7 @@ jobs:
       - run: npm run typecheck -w client
       - run: npm run build -w client
         env:
-          BASE_PATH: /tickets/
+          BASE_PATH: /
       - run: cp client/dist/index.html client/dist/404.html
       # Branch-source Pages publishes README unless the built SPA is at repo root.
       - run: node scripts/sync-pages-fallback.mjs
@@ -37,7 +37,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html 404.html favicon.svg .nojekyll assets
+          git add index.html 404.html favicon.svg CNAME .nojekyll assets
           if git diff --staged --quiet; then
             echo 'Pages fallback already current'
             exit 0
