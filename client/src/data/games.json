@@ -1,16 +1,5 @@
 [
   {
-    "id": "2026-10-04-lg",
-    "date": "2026-10-04",
-    "startTime": "14:00",
-    "opponent": "LG 트윈스",
-    "opponentShort": "LG",
-    "venue": "away",
-    "stadium": "잠실야구장",
-    "series": "서울 원정 3연전",
-    "host": "lg"
-  },
-  {
     "id": "2026-10-05-lg",
     "date": "2026-10-05",
     "startTime": "14:00",
