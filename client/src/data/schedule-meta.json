@@ -1,10 +1,10 @@
 {
   "source": "https://api-gw.sports.naver.com/schedule/games",
   "sourceLabel": "네이버 스포츠 (KBO)",
-  "updatedAt": "2026-10-06T01:42:57.815Z",
-  "fromDate": "2026-10-06",
+  "updatedAt": "2026-10-07T01:48:06.664Z",
+  "fromDate": "2026-10-07",
   "toDate": "2026-11-30",
-  "gameCount": 6,
+  "gameCount": 5,
   "tbdCount": 3,
   "leagueLastDate": "2026-10-12",
   "postseason": {
