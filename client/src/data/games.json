@@ -1,15 +1,5 @@
 [
   {
-    "id": "2026-10-07-lotte",
-    "date": "2026-10-07",
-    "startTime": "18:30",
-    "opponent": "롯데 자이언츠",
-    "opponentShort": "롯데",
-    "venue": "away",
-    "stadium": "사직야구장",
-    "series": "원정"
-  },
-  {
     "id": "2026-10-09-nc",
     "date": "2026-10-09",
     "startTime": "14:00",
