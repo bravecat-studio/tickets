@@ -1,15 +1,5 @@
 [
   {
-    "id": "2026-10-10-ssg",
-    "date": "2026-10-10",
-    "startTime": "17:00",
-    "opponent": "SSG 랜더스",
-    "opponentShort": "SSG",
-    "venue": "home",
-    "stadium": "광주-기아 챔피언스필드",
-    "series": "홈"
-  },
-  {
     "id": "2026-10-11-lotte",
     "date": "2026-10-11",
     "startTime": "14:00",
