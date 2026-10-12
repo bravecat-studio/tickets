@@ -1,15 +1,5 @@
 [
   {
-    "id": "2026-10-11-lotte",
-    "date": "2026-10-11",
-    "startTime": "14:00",
-    "opponent": "롯데 자이언츠",
-    "opponentShort": "롯데",
-    "venue": "home",
-    "stadium": "광주-기아 챔피언스필드",
-    "series": "홈"
-  },
-  {
     "id": "2026-10-12-lg",
     "date": "2026-10-12",
     "startTime": "18:30",
