@@ -1,1 +1,64 @@
-[]
+[
+  {
+    "id": "2026-10-17-lg",
+    "date": "2026-10-17",
+    "startTime": "14:00",
+    "opponent": "LG 트윈스",
+    "opponentShort": "LG",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "포스트시즌 vs LG",
+    "stage": "postseason",
+    "saleBaseDate": "2026-10-17"
+  },
+  {
+    "id": "2026-10-18-lg",
+    "date": "2026-10-18",
+    "startTime": "14:00",
+    "opponent": "LG 트윈스",
+    "opponentShort": "LG",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "포스트시즌 vs LG",
+    "stage": "postseason",
+    "saleBaseDate": "2026-10-17"
+  },
+  {
+    "id": "2026-10-20-lg",
+    "date": "2026-10-20",
+    "startTime": "18:30",
+    "opponent": "LG 트윈스",
+    "opponentShort": "LG",
+    "venue": "away",
+    "stadium": "잠실야구장",
+    "series": "포스트시즌 vs LG",
+    "host": "postseason",
+    "stage": "postseason",
+    "saleBaseDate": "2026-10-17"
+  },
+  {
+    "id": "2026-10-21-lg",
+    "date": "2026-10-21",
+    "startTime": "18:30",
+    "opponent": "LG 트윈스",
+    "opponentShort": "LG",
+    "venue": "away",
+    "stadium": "잠실야구장",
+    "series": "포스트시즌 vs LG",
+    "host": "postseason",
+    "stage": "postseason",
+    "saleBaseDate": "2026-10-17"
+  },
+  {
+    "id": "2026-10-23-lg",
+    "date": "2026-10-23",
+    "startTime": "18:30",
+    "opponent": "LG 트윈스",
+    "opponentShort": "LG",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "포스트시즌 vs LG",
+    "stage": "postseason",
+    "saleBaseDate": "2026-10-17"
+  }
+]
