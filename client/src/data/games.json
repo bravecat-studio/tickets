@@ -1,18 +1,5 @@
 [
   {
-    "id": "2026-10-20-lg",
-    "date": "2026-10-20",
-    "startTime": "18:30",
-    "opponent": "LG 트윈스",
-    "opponentShort": "LG",
-    "venue": "away",
-    "stadium": "잠실야구장",
-    "series": "포스트시즌 vs LG",
-    "host": "postseason",
-    "stage": "postseason",
-    "saleBaseDate": "2026-10-17"
-  },
-  {
     "id": "2026-10-25-samsung",
     "date": "2026-10-25",
     "startTime": "14:00",
