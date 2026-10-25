@@ -1,17 +1,5 @@
 [
   {
-    "id": "2026-10-25-samsung",
-    "date": "2026-10-25",
-    "startTime": "14:00",
-    "opponent": "삼성 라이온즈",
-    "opponentShort": "삼성",
-    "venue": "away",
-    "stadium": "대구삼성라이온즈파크",
-    "series": "포스트시즌 vs 삼성",
-    "stage": "postseason",
-    "saleBaseDate": "2026-10-25"
-  },
-  {
     "id": "2026-10-26-samsung",
     "date": "2026-10-26",
     "startTime": "18:30",
@@ -21,19 +9,19 @@
     "stadium": "대구삼성라이온즈파크",
     "series": "포스트시즌 vs 삼성",
     "stage": "postseason",
-    "saleBaseDate": "2026-10-25"
+    "saleBaseDate": "2026-10-26"
   },
   {
-    "id": "2026-10-28-samsung",
-    "date": "2026-10-28",
+    "id": "2026-10-27-samsung",
+    "date": "2026-10-27",
     "startTime": "18:30",
     "opponent": "삼성 라이온즈",
     "opponentShort": "삼성",
-    "venue": "home",
-    "stadium": "광주-기아 챔피언스필드",
+    "venue": "away",
+    "stadium": "대구삼성라이온즈파크",
     "series": "포스트시즌 vs 삼성",
     "stage": "postseason",
-    "saleBaseDate": "2026-10-25"
+    "saleBaseDate": "2026-10-26"
   },
   {
     "id": "2026-10-29-samsung",
@@ -45,11 +33,23 @@
     "stadium": "광주-기아 챔피언스필드",
     "series": "포스트시즌 vs 삼성",
     "stage": "postseason",
-    "saleBaseDate": "2026-10-25"
+    "saleBaseDate": "2026-10-26"
   },
   {
-    "id": "2026-10-31-samsung",
-    "date": "2026-10-31",
+    "id": "2026-10-30-samsung",
+    "date": "2026-10-30",
+    "startTime": "18:30",
+    "opponent": "삼성 라이온즈",
+    "opponentShort": "삼성",
+    "venue": "home",
+    "stadium": "광주-기아 챔피언스필드",
+    "series": "포스트시즌 vs 삼성",
+    "stage": "postseason",
+    "saleBaseDate": "2026-10-26"
+  },
+  {
+    "id": "2026-11-01-samsung",
+    "date": "2026-11-01",
     "startTime": "14:00",
     "opponent": "삼성 라이온즈",
     "opponentShort": "삼성",
@@ -57,6 +57,6 @@
     "stadium": "대구삼성라이온즈파크",
     "series": "포스트시즌 vs 삼성",
     "stage": "postseason",
-    "saleBaseDate": "2026-10-25"
+    "saleBaseDate": "2026-10-26"
   }
 ]
