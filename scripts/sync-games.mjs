@@ -414,19 +414,44 @@ export function naverUrl(fromDate, toDate, size = 500) {
   return `${NAVER_SCHEDULE_URL}?${params}`;
 }
 
-export async function fetchJson(url, { fetchImpl = fetch, timeoutMs = 20_000 } = {}) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetchImpl(url, {
-      headers: { 'User-Agent': UA, Accept: 'application/json' },
-      signal: controller.signal,
-    });
-    if (!res.ok) throw new Error(`schedule fetch ${res.status} ${url}`);
-    return await res.json();
-  } finally {
-    clearTimeout(timer);
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export async function fetchJson(url, {
+  fetchImpl = fetch,
+  timeoutMs = 45_000,
+  retries = 2,
+  retryDelayMs = Number(process.env.SCHEDULE_RETRY_DELAY_MS ?? 1_000),
+} = {}) {
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetchImpl(url, {
+        headers: { 'User-Agent': UA, Accept: 'application/json' },
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        const error = new Error(`schedule fetch ${res.status} ${url}`);
+        error.status = res.status;
+        if (res.status !== 429 && res.status < 500) throw error;
+        lastError = error;
+      } else {
+        return await res.json();
+      }
+    } catch (error) {
+      lastError = error;
+      if (error.status && error.status !== 429 && error.status < 500) throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+    if (attempt < retries) {
+      const delay = retryDelayMs * (2 ** attempt);
+      console.warn(`schedule fetch retry ${attempt + 1}/${retries} in ${delay}ms: ${lastError?.message ?? 'unknown error'}`);
+      await wait(delay);
+    }
   }
+  throw new Error(`schedule fetch failed after ${retries + 1} attempts: ${lastError?.message ?? url}`, { cause: lastError });
 }
 
 export async function fetchMonth(fromDate, toDate, opts = {}) {
