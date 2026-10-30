@@ -2,8 +2,8 @@
 /**
  * Persist SMS scheduler on/off into sms.config.json.
  * Used by the sms-reminder GitHub Actions workflow_dispatch input.
- * `--auto-remaining` turns the scheduler off when no Seoul-away games remain,
- * and back on only if this script auto-disabled it (manual off stays off).
+ * `--auto-remaining` is a compatibility name: it now only recovers legacy auto-off
+ * state; an empty Seoul-away schedule never disables reminders (manual off stays off).
  */
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
