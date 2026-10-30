@@ -611,16 +611,16 @@ export default function App() {
       <section className="panel">
         <h3>공식 채널</h3>
         <div className="links">
-          <a href={OFFICIAL_LINKS.kiwoomInterpark} target="_blank" rel="noreferrer">
+          <a href={OFFICIAL_LINKS.kiwoomNol} target="_blank" rel="noreferrer">
             키움 NOL 예매
           </a>
           <a href={OFFICIAL_LINKS.lgTicketlink} target="_blank" rel="noreferrer">
             LG 티켓링크 예매
           </a>
-          <a href={OFFICIAL_LINKS.interparkSports} target="_blank" rel="noreferrer">
+          <a href={OFFICIAL_LINKS.nolSports} target="_blank" rel="noreferrer">
             NOL 스포츠
           </a>
-          <a href={APP_STORES.interparkAndroid} target="_blank" rel="noreferrer">
+          <a href={APP_STORES.nolAndroid} target="_blank" rel="noreferrer">
             NOL 앱 (Play)
           </a>
           <a href={APP_STORES.ticketlinkAndroid} target="_blank" rel="noreferrer">
