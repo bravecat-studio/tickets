@@ -28,31 +28,21 @@ export function applySchedulerState(config, action) {
 }
 
 /**
- * Reconcile scheduler enabled with remaining Seoul-away games.
- * Manual off (enabled=false without autoDisabled) is never overridden.
+ * Seoul-away ticket-sale windows are seasonal, but the SMS scheduler is not.
+ * Do not switch it off merely because today's schedule has no Seoul-away game:
+ * postseason / makeup schedules can be published later. Only an explicit manual
+ * off disables the scheduler; a legacy autoDisabled state is recovered to on.
  */
 export function applyRemainingGamesScheduler(config, remainingCount) {
-  const remaining = remainingCount > 0;
   const autoDisabled = config.autoDisabled === true;
 
-  if (!remaining) {
-    if (config.enabled === false && autoDisabled) {
-      return { config, action: 'already-off', remainingCount };
-    }
-    if (config.enabled === false) {
-      return { config, action: 'keep-manual-off', remainingCount };
-    }
-    return {
-      config: { ...config, enabled: false, autoDisabled: true },
-      action: 'auto-off',
-      remainingCount,
-    };
-  }
-
-  if (autoDisabled) {
+  if (config.enabled === false && autoDisabled) {
     const next = { ...config, enabled: true };
     delete next.autoDisabled;
     return { config: next, action: 'auto-on', remainingCount };
+  }
+  if (config.enabled === false) {
+    return { config, action: 'keep-manual-off', remainingCount };
   }
   return { config, action: 'unchanged', remainingCount };
 }
@@ -112,17 +102,17 @@ export function runSelfTest() {
   }
 
   const base = { enabled: true, kinds: ['general'] };
-  const autoOff = applyRemainingGamesScheduler(base, 0);
-  if (autoOff.action !== 'auto-off' || autoOff.config.enabled !== false || autoOff.config.autoDisabled !== true) {
-    throw new Error('self-test failed: zero remaining Seoul-away games should auto-off the scheduler');
+  const noSeoulGames = applyRemainingGamesScheduler(base, 0);
+  if (noSeoulGames.action !== 'unchanged' || noSeoulGames.config.enabled !== true) {
+    throw new Error('self-test failed: zero Seoul-away games must not disable the scheduler');
   }
-  const already = applyRemainingGamesScheduler(autoOff.config, 0);
-  if (already.action !== 'already-off' || already.config !== autoOff.config) {
-    throw new Error('self-test failed: repeated auto-off should be a no-op');
+  const stillOn = applyRemainingGamesScheduler(noSeoulGames.config, 0);
+  if (stillOn.action !== 'unchanged' || stillOn.config.enabled !== true) {
+    throw new Error('self-test failed: repeated no-game checks must keep the scheduler on');
   }
-  const resumed = applyRemainingGamesScheduler(autoOff.config, 1);
-  if (resumed.action !== 'auto-on' || resumed.config.enabled !== true || resumed.config.autoDisabled !== undefined) {
-    throw new Error('self-test failed: remaining Seoul-away games should auto-on after auto-off');
+  const recovered = applyRemainingGamesScheduler({ enabled: false, autoDisabled: true, kinds: ['general'] }, 0);
+  if (recovered.action !== 'auto-on' || recovered.config.enabled !== true || recovered.config.autoDisabled !== undefined) {
+    throw new Error('self-test failed: legacy auto-disabled scheduler must recover to on');
   }
   const manualOff = applyRemainingGamesScheduler({ enabled: false, kinds: ['general'] }, 0);
   if (manualOff.action !== 'keep-manual-off' || manualOff.config.autoDisabled === true) {
@@ -145,18 +135,18 @@ export function runSelfTest() {
     throw new Error('self-test failed: sms-reminder.yml must quote on/off so YAML does not coerce them to booleans');
   }
   if (!workflow.includes('--auto-remaining')) {
-    throw new Error('self-test failed: sms-reminder.yml must auto-stop the scheduler when no Seoul-away games remain');
+    throw new Error('self-test failed: sms-reminder.yml must reconcile scheduler state without auto-disabling it');
   }
   if (!workflow.includes('npm run pages:sync')) {
     throw new Error('self-test failed: sms-reminder.yml must pages:sync when the scheduler state is committed');
   }
   const scheduleWorkflow = readFileSync(join(ROOT, '.github/workflows/update-schedule.yml'), 'utf8');
   if (!scheduleWorkflow.includes('--auto-remaining')) {
-    throw new Error('self-test failed: update-schedule.yml must auto-stop the scheduler when no Seoul-away games remain');
+    throw new Error('self-test failed: update-schedule.yml must reconcile the scheduler without disabling it between Seoul-away games');
   }
   const autoCommit = scheduleWorkflow.split('Commit SMS scheduler auto state')[1] ?? '';
   if (!autoCommit.includes('npm run pages:sync')) {
-    throw new Error('self-test failed: update-schedule.yml must pages:sync when auto-stopping the scheduler');
+    throw new Error('self-test failed: update-schedule.yml must pages:sync when recovering scheduler state');
   }
   const pagesWorkflow = readFileSync(join(ROOT, '.github/workflows/pages.yml'), 'utf8');
   if (!pagesWorkflow.includes('Commit Pages fallback if drifted')) {
