@@ -1,14 +1,15 @@
 # KIA 타이거즈 서울 원정 예매 도우미
 
-비상업·개인 구매용 GitHub Pages 사이트입니다. **기아 타이거즈 서울 원정**(잠실 LG·두산, 고척 키움) **예매 오픈 시각**만 계산하고, 그 경우에만 알림을 보냅니다. 오픈 시각에는 **상대 구단 공식 예매처**(NOL 인터파크 또는 티켓링크)로 안내합니다.
+비상업·개인 구매용 GitHub Pages 사이트입니다. **기아 타이거즈 서울 원정**(잠실 LG·두산, 고척 키움) **예매 오픈 시각**만 계산하고, 그 경우에만 알림을 보냅니다. 오픈 시각에는 **상대 구단 공식 예매처**(NOL 또는 티켓링크)로 안내합니다.
 
 광주 홈경기와 서울 밖 원정(창원·대전·수원 등)은 일정 계산·문자·브라우저 알림 대상이 아닙니다.
 
 실제 좌석 점유·결제·매크로는 포함하지 않습니다. 구매는 항상 아래 공식 채널에서 완료하세요.
 
-- 키움(고척) NOL: https://tickets.interpark.com/special/sports/hero
+- 키움(고척) NOL: https://nol.yanolja.com/ticket/genre/sports/heroes
 - LG(잠실) 티켓링크: https://www.ticketlink.co.kr/sports/137/62
-- NOL 스포츠: https://tickets.interpark.com/contents/sports
+- NOL 스포츠: https://nol.yanolja.com/ticket/genre/sports
+- NOL 앱 (Google Play): https://play.google.com/store/apps/details?id=com.cultsotry.yanolja.nativeapp
 - KIA 경기 일정: https://tigers.co.kr/game/schedule
 
 배포 주소: https://ticket.bravecat.studio/ (GitHub Pages 커스텀 도메인, `CNAME`)
@@ -16,7 +17,7 @@
 ## 무엇을 하나요
 
 - 서울 원정만: 상대 구단 정책으로 선예매·일반예매 오픈 시각을 한국 시간으로 계산
-  - 키움 고척: 일반예매 D-7 14:00 (연간회원 11:00, 멤버십 12:00) · NOL 인터파크
+  - 키움 고척: 일반예매 D-7 14:00 (연간회원 11:00, 멤버십 12:00) · NOL
   - LG 잠실: 일반예매 D-7 11:00 (연간회원 D-9 11:00) · 티켓링크
   - 두산 잠실: 일반예매 D-7 11:00 (베어스클럽 10:00) · NOL 인터파크
 - 대기 모드: 오픈 시각에 알림·효과음 후 상대 구단 공식 예매 탭 열기
