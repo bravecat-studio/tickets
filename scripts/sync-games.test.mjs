@@ -32,6 +32,19 @@ async function main() {
   assert(seasonWindow(new Date('2027-01-15T12:00:00+09:00')).toDate === '2027-11-30', 'January looks at the new season');
   assert(naverUrl('2026-08-01', '2026-08-31').includes('fromDate=2026-08-01'), 'Naver URL carries the month window');
 
+  let transientAttempts = 0;
+  const retryFetch = async () => {
+    transientAttempts += 1;
+    if (transientAttempts === 1) throw new DOMException('The operation was aborted', 'AbortError');
+    return jsonResponse({ result: { games: [{ gameId: 'retry-ok' }] } });
+  };
+  const retried = await (await import('./sync-games.mjs')).fetchJson('https://example.test/retry', {
+    fetchImpl: retryFetch,
+    retries: 1,
+    retryDelayMs: 0,
+  });
+  assert(retried.result.games[0].gameId === 'retry-ok' && transientAttempts === 2, 'transient aborts are retried before failing');
+
   const urls = [];
   const fetchImpl = async (url) => {
     urls.push(url);
@@ -71,9 +84,9 @@ async function main() {
   assert(workflow.includes("cron: '20 1,13 * * *'"), 'workflow must run twice daily in KST');
   assert(workflow.includes('node scripts/sync-games.mjs'), 'workflow must run the sync script');
   assert(workflow.includes('client/src/data/games.json'), 'workflow must commit games.json');
-  assert(workflow.includes('--auto-remaining'), 'workflow must auto-stop the SMS scheduler when no Seoul-away games remain');
+  assert(workflow.includes('--auto-remaining'), 'workflow must reconcile the SMS scheduler without disabling it between Seoul-away games');
   const autoCommit = workflow.split('Commit SMS scheduler auto state')[1] ?? '';
-  assert(autoCommit.includes('npm run pages:sync'), 'workflow must pages:sync when auto-stopping the SMS scheduler');
+  assert(autoCommit.includes('npm run pages:sync'), 'workflow must pages:sync when recovering the SMS scheduler');
   // Pages deploy lives in github-pages.yml (push). update-schedule only commits;
   // a second deploy-pages here races the push-triggered deploy.
   assert(!workflow.includes('actions/deploy-pages@v4'), 'update-schedule must not deploy Pages itself');

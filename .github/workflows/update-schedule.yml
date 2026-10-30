@@ -39,7 +39,7 @@ jobs:
           cache: npm
       - name: Fetch KBO schedule
         run: node scripts/sync-games.test.mjs && node scripts/sync-games.mjs
-      - name: Reconcile SMS scheduler with remaining games
+      - name: Recover legacy auto-disabled scheduler (never auto-stop on an empty Seoul-away list)
         id: scheduler
         env:
           DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
