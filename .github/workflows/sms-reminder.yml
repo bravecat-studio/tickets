@@ -2,7 +2,7 @@ name: sms-reminder
 
 on:
   schedule:
-    # Twice daily for general sales: 10:00 KST (LG/Doosan 11:00 open) and 13:00 KST (Kiwoom 14:00 open).
+    # Keep polling during gaps between Seoul-away sales; postseason schedules may appear later.
     # GitHub cron is UTC.
     - cron: '0 1,4 * * *'
   workflow_dispatch:
@@ -98,7 +98,7 @@ jobs:
           SOLAPI_API_SECRET: ${{ secrets.SOLAPI_API_SECRET }}
           SOLAPI_SENDER: ${{ secrets.SOLAPI_SENDER }}
         run: node scripts/sms-reminder.mjs
-      - name: Reconcile SMS scheduler with remaining games
+      - name: Recover legacy auto-disabled scheduler (never auto-stop on an empty Seoul-away list)
         id: scheduler
         env:
           DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
